@@ -123,11 +123,9 @@ ${css}
   <div id="app" class="hidden">
 
     <header class="lcars-app-topbar">
-      <div class="lcars-elbow-tl-sm">
-        <span class="lcars-app-title">LCARS</span>
-      </div>
+      <div class="lcars-elbow-tl-sm"></div>
       <div class="lcars-topbar-center">
-        <span class="lcars-topbar-label">WHITEBOARD INTERFACE</span>
+        <span class="lcars-topbar-label">LCARS WHITEBOARD</span>
         <div class="lcars-zoom-group">
           <button id="zoom-out" class="lcars-btn lcars-btn--blue lcars-btn--sm">&#8722;</button>
           <span id="zoom-display" class="lcars-zoom-display">100%</span>

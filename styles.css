@@ -341,16 +341,6 @@ html, body {
   border-top-left-radius: calc(var(--elbow-r) - 6px);
 }
 
-.lcars-app-title {
-  /* title text sits inside the elbow, visible portion */
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.22em;
-  color: var(--lcars-black);
-  z-index: 1;
-  pointer-events: none;
-}
-
 .lcars-topbar-center {
   flex: 1;
   display: flex;
@@ -360,8 +350,9 @@ html, body {
 }
 
 .lcars-topbar-label {
-  font-size: 0.75rem;
-  letter-spacing: 0.2em;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.22em;
   color: var(--lcars-orange);
   flex: 1;
 }

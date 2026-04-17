@@ -350,16 +350,6 @@ html, body {
   border-top-left-radius: calc(var(--elbow-r) - 6px);
 }
 
-.lcars-app-title {
-  /* title text sits inside the elbow, visible portion */
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.22em;
-  color: var(--lcars-black);
-  z-index: 1;
-  pointer-events: none;
-}
-
 .lcars-topbar-center {
   flex: 1;
   display: flex;
@@ -369,8 +359,9 @@ html, body {
 }
 
 .lcars-topbar-label {
-  font-size: 0.75rem;
-  letter-spacing: 0.2em;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.22em;
   color: var(--lcars-orange);
   flex: 1;
 }
@@ -773,11 +764,9 @@ button, label { user-select: none; }
   <div id="app" class="hidden">
 
     <header class="lcars-app-topbar">
-      <div class="lcars-elbow-tl-sm">
-        <span class="lcars-app-title">LCARS</span>
-      </div>
+      <div class="lcars-elbow-tl-sm"></div>
       <div class="lcars-topbar-center">
-        <span class="lcars-topbar-label">WHITEBOARD INTERFACE</span>
+        <span class="lcars-topbar-label">LCARS WHITEBOARD</span>
         <div class="lcars-zoom-group">
           <button id="zoom-out" class="lcars-btn lcars-btn--blue lcars-btn--sm">&#8722;</button>
           <span id="zoom-display" class="lcars-zoom-display">100%</span>
@@ -1841,8 +1830,14 @@ screenshotBtn.addEventListener('click', async () => {
 // ============================================================
 
 async function loadPDF(file) {
-  const buf = await file.arrayBuffer();
-  state.pdfDoc      = await pdfjsLib.getDocument({ data: buf }).promise;
+  if (typeof pdfjsLib === 'undefined') {
+    alert('PDF.js failed to load. Try refreshing the page.');
+    return;
+  }
+  if (statusText) statusText.textContent = 'LOADING PDF…';
+  const buf    = await file.arrayBuffer();
+  const task   = pdfjsLib.getDocument({ data: buf });
+  state.pdfDoc = await task.promise;
   state.totalPages  = state.pdfDoc.numPages;
   state.currentPage = 1;
   state.pdfStrokes  = {};
@@ -1860,8 +1855,20 @@ async function renderPdfPage(pageNum) {
   tmp.width      = viewport.width;
   tmp.height     = viewport.height;
   const tctx     = tmp.getContext('2d');
-  await page.render({ canvasContext: tctx, viewport }).promise;
-  loadBackgroundImage(tmp.toDataURL('image/png'));
+  const renderTask = page.render({ canvasContext: tctx, viewport });
+  await renderTask.promise;
+  const dataURL = tmp.toDataURL('image/png');
+  await new Promise(resolve => {
+    const img = new Image();
+    img.onload = () => {
+      state.bgImage   = img;
+      state.bgDataURL = dataURL;
+      redrawBg();
+      resolve();
+    };
+    img.onerror = resolve;
+    img.src = dataURL;
+  });
   pageLabel.textContent = `${pageNum} / ${state.totalPages}`;
   updateStatus();
 }
@@ -1869,9 +1876,7 @@ async function renderPdfPage(pageNum) {
 async function switchToPdfPage(newPage) {
   if (!state.pdfDoc) return;
   if (newPage < 1 || newPage > state.totalPages) return;
-  // Save current page strokes
   state.pdfStrokes[state.currentPage] = [...state.strokes];
-  // Load new page
   state.currentPage = newPage;
   state.strokes     = state.pdfStrokes[newPage] ? [...state.pdfStrokes[newPage]] : [];
   state.undoStack   = [];
@@ -1885,7 +1890,13 @@ async function switchToPdfPage(newPage) {
 filePdfInput.addEventListener('change', async (e) => {
   const file = e.target.files[0];
   if (!file) return;
-  await loadPDF(file);
+  try {
+    await loadPDF(file);
+  } catch (err) {
+    console.error('PDF load error:', err);
+    if (statusText) statusText.textContent = 'ERROR: ' + (err.message || err);
+    alert('Failed to load PDF: ' + (err.message || err));
+  }
   e.target.value = '';
 });
 

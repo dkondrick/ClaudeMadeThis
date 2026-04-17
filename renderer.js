@@ -525,8 +525,14 @@ screenshotBtn.addEventListener('click', async () => {
 // ============================================================
 
 async function loadPDF(file) {
-  const buf = await file.arrayBuffer();
-  state.pdfDoc      = await pdfjsLib.getDocument({ data: buf }).promise;
+  if (typeof pdfjsLib === 'undefined') {
+    alert('PDF.js failed to load. Try refreshing the page.');
+    return;
+  }
+  if (statusText) statusText.textContent = 'LOADING PDF…';
+  const buf    = await file.arrayBuffer();
+  const task   = pdfjsLib.getDocument({ data: buf });
+  state.pdfDoc = await task.promise;
   state.totalPages  = state.pdfDoc.numPages;
   state.currentPage = 1;
   state.pdfStrokes  = {};
@@ -544,8 +550,20 @@ async function renderPdfPage(pageNum) {
   tmp.width      = viewport.width;
   tmp.height     = viewport.height;
   const tctx     = tmp.getContext('2d');
-  await page.render({ canvasContext: tctx, viewport }).promise;
-  loadBackgroundImage(tmp.toDataURL('image/png'));
+  const renderTask = page.render({ canvasContext: tctx, viewport });
+  await renderTask.promise;
+  const dataURL = tmp.toDataURL('image/png');
+  await new Promise(resolve => {
+    const img = new Image();
+    img.onload = () => {
+      state.bgImage   = img;
+      state.bgDataURL = dataURL;
+      redrawBg();
+      resolve();
+    };
+    img.onerror = resolve;
+    img.src = dataURL;
+  });
   pageLabel.textContent = `${pageNum} / ${state.totalPages}`;
   updateStatus();
 }
@@ -553,9 +571,7 @@ async function renderPdfPage(pageNum) {
 async function switchToPdfPage(newPage) {
   if (!state.pdfDoc) return;
   if (newPage < 1 || newPage > state.totalPages) return;
-  // Save current page strokes
   state.pdfStrokes[state.currentPage] = [...state.strokes];
-  // Load new page
   state.currentPage = newPage;
   state.strokes     = state.pdfStrokes[newPage] ? [...state.pdfStrokes[newPage]] : [];
   state.undoStack   = [];
@@ -569,7 +585,13 @@ async function switchToPdfPage(newPage) {
 filePdfInput.addEventListener('change', async (e) => {
   const file = e.target.files[0];
   if (!file) return;
-  await loadPDF(file);
+  try {
+    await loadPDF(file);
+  } catch (err) {
+    console.error('PDF load error:', err);
+    if (statusText) statusText.textContent = 'ERROR: ' + (err.message || err);
+    alert('Failed to load PDF: ' + (err.message || err));
+  }
   e.target.value = '';
 });
 
