@@ -178,10 +178,7 @@ ${css}
 
       <div id="wb-import-controls" class="lcars-sidebar-group">
         <div class="lcars-group-label">IMPORT</div>
-        <label class="lcars-btn lcars-btn--orange lcars-btn--wide" for="file-image-input">
-          IMAGE
-          <input type="file" id="file-image-input" accept="image/*">
-        </label>
+        <button id="import-image-btn" class="lcars-btn lcars-btn--orange lcars-btn--wide">IMAGE</button>
         <button id="screenshot-btn" class="lcars-btn lcars-btn--blue lcars-btn--wide">SCREENSHOT</button>
       </div>
 
@@ -189,10 +186,7 @@ ${css}
 
       <div id="pdf-controls" class="lcars-sidebar-group">
         <div class="lcars-group-label">PDF</div>
-        <label class="lcars-btn lcars-btn--orange lcars-btn--wide" for="file-pdf-input">
-          LOAD PDF
-          <input type="file" id="file-pdf-input" accept="application/pdf">
-        </label>
+        <button id="load-pdf-btn" class="lcars-btn lcars-btn--orange lcars-btn--wide">LOAD PDF</button>
         <div class="lcars-page-nav">
           <button id="prev-page-btn" class="lcars-btn lcars-btn--blue lcars-btn--half">&#8592;</button>
           <span id="page-label" class="lcars-page-label">1 / 1</span>
@@ -201,10 +195,7 @@ ${css}
       </div>
 
       <div class="lcars-sidebar-group">
-        <label class="lcars-btn lcars-btn--purple lcars-btn--wide" for="file-json-input">
-          OPEN JSON
-          <input type="file" id="file-json-input" accept=".json">
-        </label>
+        <button id="open-json-btn" class="lcars-btn lcars-btn--purple lcars-btn--wide">OPEN JSON</button>
       </div>
 
       <div class="lcars-sidebar-spacer"></div>
@@ -239,6 +230,11 @@ ${css}
       </div>
       <div class="lcars-bottom-right-cap"></div>
     </footer>
+
+    <!-- Hidden file inputs — triggered via JS .click() -->
+    <input type="file" id="file-image-input" accept="image/*">
+    <input type="file" id="file-pdf-input"   accept="application/pdf">
+    <input type="file" id="file-json-input"  accept=".json">
 
   </div>
 

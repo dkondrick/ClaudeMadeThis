@@ -66,9 +66,12 @@ const zoomInBtn          = document.getElementById('zoom-in');
 const zoomDisplay        = document.getElementById('zoom-display');
 
 const fileImageInput     = document.getElementById('file-image-input');
+const importImageBtn     = document.getElementById('import-image-btn');
 const screenshotBtn      = document.getElementById('screenshot-btn');
 const fileJsonInput      = document.getElementById('file-json-input');
+const openJsonBtn        = document.getElementById('open-json-btn');
 const filePdfInput       = document.getElementById('file-pdf-input');
+const loadPdfBtn         = document.getElementById('load-pdf-btn');
 const prevPageBtn        = document.getElementById('prev-page-btn');
 const nextPageBtn        = document.getElementById('next-page-btn');
 const pageLabel          = document.getElementById('page-label');
@@ -479,6 +482,10 @@ backBtn.addEventListener('click', showStartScreen);
 // ============================================================
 // Import image
 // ============================================================
+
+importImageBtn.addEventListener('click', () => fileImageInput.click());
+loadPdfBtn.addEventListener('click',     () => filePdfInput.click());
+openJsonBtn.addEventListener('click',    () => fileJsonInput.click());
 
 fileImageInput.addEventListener('change', (e) => {
   const file = e.target.files[0];
