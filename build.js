@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /* ============================================================
-   build.js — Produces a standalone dist/whiteboard.html
+   build.js — Produces a standalone dist/index.html (no external deps)
    Inlines pdfjs, jspdf, and renderer.js with no external deps.
    ============================================================ */
 
@@ -20,8 +20,10 @@ const worker   = fs.readFileSync(path.join(root, 'node_modules/pdfjs-dist/build/
 
 // Patch renderer: replace workerSrc file path with inline Blob URL
 const workerSetup = `(function(){
-  var blob = new Blob([${JSON.stringify(worker)}], { type: 'application/javascript' });
-  pdfjsLib.GlobalWorkerOptions.workerSrc = URL.createObjectURL(blob);
+  if (typeof pdfjsLib !== 'undefined') {
+    var blob = new Blob([${JSON.stringify(worker)}], { type: 'application/javascript' });
+    pdfjsLib.GlobalWorkerOptions.workerSrc = URL.createObjectURL(blob);
+  }
 })();`;
 
 const patched = renderer.replace(
@@ -248,7 +250,9 @@ ${patched}
 </body>
 </html>`;
 
-const outPath = path.join(dist, 'whiteboard.html');
+const outPath = path.join(dist, 'index.html');
 fs.writeFileSync(outPath, html, 'utf8');
+// Keep whiteboard.html alias for backwards compat
+fs.writeFileSync(path.join(dist, 'whiteboard.html'), html, 'utf8');
 const size = (fs.statSync(outPath).size / 1024 / 1024).toFixed(2);
 console.log(`Built: ${outPath} (${size} MB)`);

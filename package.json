@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "LCARS-styled whiteboard and PDF annotator",
   "scripts": {
-    "start": "npx serve .",
+    "start": "node build.js && npx serve dist",
     "build": "node build.js"
   },
   "dependencies": {
