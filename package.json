@@ -1,0 +1,13 @@
+{
+  "name": "lcars-whiteboard",
+  "version": "1.0.0",
+  "description": "LCARS-styled whiteboard and PDF annotator",
+  "scripts": {
+    "start": "npx serve .",
+    "build": "node build.js"
+  },
+  "dependencies": {
+    "jspdf": "^2.5.1",
+    "pdfjs-dist": "3.11.174"
+  }
+}
