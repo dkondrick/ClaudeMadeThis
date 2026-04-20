@@ -1,6 +1,6 @@
 /* ============================================================
-   LCARS WHITEBOARD — styles.css
-   Star Trek LCARS aesthetic
+   LCARS EDUCATION GENERATOR — styles.css
+   Star Trek LCARS aesthetic for Homework & IEP Goal Generator
    ============================================================ */
 
 :root {
@@ -13,7 +13,7 @@
   --lcars-tan:        #FFCC99;
   --lcars-canvas-bg:  #F8F8F0;
 
-  --sidebar-w:   180px;
+  --sidebar-w:   200px;
   --topbar-h:    48px;
   --bottombar-h: 54px;
   --elbow-r:     28px;
@@ -39,7 +39,7 @@ html, body {
 .hidden { display: none !important; }
 
 /* ============================================================
-   LCARS BUTTONS
+   LCARS BUTTONS & INPUTS
    ============================================================ */
 
 .lcars-btn {
@@ -65,6 +65,7 @@ html, body {
 
 .lcars-btn:hover  { filter: brightness(1.18); }
 .lcars-btn:active { transform: scale(0.95); filter: brightness(0.88); }
+.lcars-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .lcars-btn--orange { background: var(--lcars-orange); }
 .lcars-btn--blue   { background: var(--lcars-blue);   }
@@ -77,10 +78,35 @@ html, body {
 .lcars-btn--wide { width: 100%; margin-bottom: 5px; }
 .lcars-btn--half { flex: 1; }
 
-/* Active tool gets a white outline ring */
-.lcars-btn.active-tool {
-  outline: 2px solid #ffffff;
-  outline-offset: 2px;
+/* Input styles */
+.lcars-input, .lcars-select, .lcars-textarea {
+  width: 100%;
+  padding: 8px 10px;
+  margin-bottom: 4px;
+  background: #1a1a1a;
+  border: 1px solid var(--lcars-blue);
+  border-radius: 6px;
+  color: var(--lcars-lblue);
+  font-family: inherit;
+  font-size: 0.75rem;
+  transition: border-color 0.2s;
+}
+
+.lcars-input:focus, .lcars-select:focus, .lcars-textarea:focus {
+  outline: none;
+  border-color: var(--lcars-orange);
+  box-shadow: 0 0 0 2px var(--lcars-orange)22;
+}
+
+.lcars-textarea {
+  resize: vertical;
+}
+
+.lcars-help-text {
+  font-size: 0.6rem;
+  color: var(--lcars-purple);
+  margin-top: -2px;
+  margin-bottom: 6px;
 }
 
 /* ============================================================
@@ -101,6 +127,25 @@ html, body {
   flex-shrink: 0;
 }
 
+/* API status indicator */
+.api-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--lcars-orange);
+  display: inline-block;
+  margin-right: 6px;
+}
+
+.api-status-dot.ready { background: var(--lcars-orange); }
+.api-status-dot.error { background: var(--lcars-red); }
+
+.api-status-text {
+  font-size: 0.7rem;
+  color: var(--lcars-lblue);
+  letter-spacing: 0.1em;
+}
+
 /* ============================================================
    START SCREEN
    ============================================================ */
@@ -114,7 +159,6 @@ html, body {
   gap: 0;
 }
 
-/* --- Top bar --- */
 .lcars-top-bar {
   display: flex;
   align-items: stretch;
@@ -171,7 +215,6 @@ html, body {
   flex-shrink: 0;
 }
 
-/* --- Body: left bar | center | right bar --- */
 .lcars-start-body {
   flex: 1;
   display: flex;
@@ -194,7 +237,6 @@ html, body {
   min-height: 8px;
 }
 
-/* Center */
 .lcars-start-center {
   flex: 1;
   display: flex;
@@ -245,7 +287,6 @@ html, body {
 .lcars-mode-label { font-size: 1.05rem; font-weight: 700; letter-spacing: 0.22em; }
 .lcars-mode-sub   { font-size: 0.62rem; letter-spacing: 0.16em; opacity: 0.75; }
 
-/* Footer strip */
 .lcars-start-footer {
   display: flex;
   align-items: center;
@@ -267,7 +308,6 @@ html, body {
   border-radius: 4px;
 }
 
-/* --- Bottom bar --- */
 .lcars-bottom-bar {
   height: 38px;
   display: flex;
@@ -301,7 +341,7 @@ html, body {
   grid-template-rows: var(--topbar-h) 1fr var(--bottombar-h);
   grid-template-areas:
     "topbar   topbar"
-    "sidebar  canvas"
+    "sidebar  content"
     "sidebar  bottombar";
   background: var(--lcars-black);
 }
@@ -318,7 +358,6 @@ html, body {
   gap: 0;
 }
 
-/* The elbow connects top-bar to sidebar visually */
 .lcars-elbow-tl-sm {
   width: var(--sidebar-w);
   height: calc(var(--topbar-h) - 6px);
@@ -347,6 +386,7 @@ html, body {
   align-items: center;
   padding: 0 16px;
   gap: 8px;
+  justify-content: space-between;
 }
 
 .lcars-topbar-label {
@@ -354,21 +394,12 @@ html, body {
   font-weight: 700;
   letter-spacing: 0.22em;
   color: var(--lcars-orange);
-  flex: 1;
 }
 
-.lcars-zoom-group {
+.lcars-status-indicator {
   display: flex;
   align-items: center;
-  gap: 6px;
-}
-
-.lcars-zoom-display {
-  font-size: 0.8rem;
-  letter-spacing: 0.12em;
-  color: var(--lcars-lblue);
-  min-width: 46px;
-  text-align: center;
+  gap: 4px;
 }
 
 .lcars-topbar-right-cap {
@@ -393,11 +424,13 @@ html, body {
   padding: 0 8px 0 8px;
   overflow-y: auto;
   overflow-x: hidden;
-  scrollbar-width: none;
+  scrollbar-width: thin;
+  scrollbar-color: var(--lcars-orange) transparent;
 }
-.lcars-sidebar::-webkit-scrollbar { display: none; }
+.lcars-sidebar::-webkit-scrollbar { width: 6px; }
+.lcars-sidebar::-webkit-scrollbar-track { background: transparent; }
+.lcars-sidebar::-webkit-scrollbar-thumb { background: var(--lcars-orange); border-radius: 3px; }
 
-/* Top connector strip under the elbow */
 .lcars-sidebar-top-strip {
   height: 8px;
   background: var(--lcars-orange);
@@ -430,105 +463,6 @@ html, body {
   flex-shrink: 0;
 }
 
-/* ---- Color swatches ---- */
-.lcars-color-swatches {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 5px;
-  margin-bottom: 5px;
-}
-
-.lcars-swatch {
-  aspect-ratio: 1;
-  border: 2px solid #2a2a2a;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: transform 0.1s, border-color 0.1s;
-  padding: 0;
-}
-
-.lcars-swatch:hover        { transform: scale(1.18); border-color: #ffffff88; }
-.lcars-swatch.active-swatch { border-color: #ffffff; border-width: 2px; box-shadow: 0 0 0 1px #ffffff; }
-
-/* Custom color label-button wrapping hidden input */
-.lcars-color-custom-label {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  padding: 6px 14px;
-  border-radius: var(--btn-r);
-  background: var(--lcars-purple);
-  color: var(--lcars-black);
-  font-family: inherit;
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  cursor: pointer;
-  user-select: none;
-  margin-bottom: 5px;
-  transition: filter 0.12s;
-}
-.lcars-color-custom-label:hover { filter: brightness(1.18); }
-
-#color-picker {
-  opacity: 0;
-  position: absolute;
-  width: 0;
-  height: 0;
-  pointer-events: none;
-}
-
-/* ---- Stroke slider ---- */
-.lcars-slider {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 100%;
-  height: 5px;
-  background: #333;
-  border-radius: 3px;
-  outline: none;
-  cursor: pointer;
-}
-
-.lcars-slider::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  width: 17px;
-  height: 17px;
-  border-radius: 50%;
-  background: var(--lcars-orange);
-  cursor: pointer;
-  border: 2px solid var(--lcars-black);
-  box-shadow: 0 0 0 1px var(--lcars-orange);
-}
-
-.lcars-slider::-moz-range-thumb {
-  width: 17px;
-  height: 17px;
-  border-radius: 50%;
-  background: var(--lcars-orange);
-  cursor: pointer;
-  border: 2px solid var(--lcars-black);
-}
-
-/* ---- Page navigation ---- */
-.lcars-page-nav {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.lcars-page-label {
-  flex: 1;
-  text-align: center;
-  font-size: 0.72rem;
-  letter-spacing: 0.1em;
-  color: var(--lcars-lblue);
-  white-space: nowrap;
-}
-
-/* ---- Spacer + status ---- */
 .lcars-sidebar-spacer { flex: 1; min-height: 8px; }
 
 .lcars-sidebar-status {
@@ -550,7 +484,6 @@ html, body {
   flex: 1;
 }
 
-/* Bottom cap of sidebar */
 .lcars-sidebar-bottom-cap {
   height: 30px;
   background: var(--lcars-orange);
@@ -561,33 +494,49 @@ html, body {
 }
 
 /* ============================================================
-   CANVAS AREA
+   CONTENT AREA
    ============================================================ */
 
-.lcars-canvas-area {
-  grid-area: canvas;
+.lcars-content-area {
+  grid-area: content;
   position: relative;
   background: var(--lcars-canvas-bg);
-  overflow: hidden;
+  overflow-y: auto;
+  padding: 12px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--lcars-orange) transparent;
+}
+.lcars-content-area::-webkit-scrollbar { width: 8px; }
+.lcars-content-area::-webkit-scrollbar-track { background: transparent; }
+.lcars-content-area::-webkit-scrollbar-thumb { background: var(--lcars-orange); border-radius: 4px; }
+
+.output-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 1000px;
 }
 
-#bg-canvas {
-  position: absolute;
-  top: 0; left: 0;
-  z-index: 1;
-  touch-action: none;
+.output-text {
+  background: var(--lcars-black);
+  border: 1px solid var(--lcars-blue);
+  border-radius: 8px;
+  padding: 16px;
+  color: var(--lcars-lblue);
+  font-size: 0.9rem;
+  line-height: 1.6;
+  font-family: 'Courier New', monospace;
+  min-height: 100px;
+  white-space: pre-wrap;
+  word-wrap: break-word;
 }
 
-#canvas {
-  position: absolute;
-  top: 0; left: 0;
-  z-index: 2;
-  cursor: crosshair;
-  touch-action: none;
+.output-text.streaming {
+  border-color: var(--lcars-orange);
 }
 
 /* ============================================================
-   BOTTOM EXPORT TOOLBAR
+   BOTTOM TOOLBAR
    ============================================================ */
 
 .lcars-bottom-toolbar {
@@ -607,21 +556,12 @@ html, body {
   flex-shrink: 0;
 }
 
-.lcars-export-group,
 .lcars-action-group {
   display: flex;
   gap: 5px;
   align-items: center;
   flex-wrap: nowrap;
-}
-
-.lcars-bottom-divider {
-  width: 4px;
-  height: 28px;
-  background: var(--lcars-purple);
-  border-radius: 2px;
-  flex-shrink: 0;
-  margin: 0 4px;
+  flex: 1;
 }
 
 .lcars-bottom-right-cap {
@@ -630,34 +570,7 @@ html, body {
   background: var(--lcars-blue);
   border-radius: 0 50% 50% 0;
   flex-shrink: 0;
-  margin-left: auto;
 }
-
-/* ============================================================
-   PDF CONTROLS VISIBILITY
-   ============================================================ */
-
-#pdf-controls { display: none; }
-#app.mode-pdf #pdf-controls { display: flex; }
-
-/* ============================================================
-   HIDDEN FILE INPUTS
-   ============================================================ */
-
-input[type="file"] {
-  display: none;
-}
-
-/* ============================================================
-   SELECTION + MISC
-   ============================================================ */
-
-::selection {
-  background: var(--lcars-orange);
-  color: var(--lcars-black);
-}
-
-button, label { user-select: none; }
 
 /* ============================================================
    RESPONSIVE
