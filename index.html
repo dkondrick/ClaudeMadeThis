@@ -3,260 +3,620 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>HOMEWORK & IEP GOAL GENERATOR</title>
+  <title>Math Homework &amp; IEP Generator</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Antonio:wght@400;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+/* ============================================================
+   Math Homework & IEP Generator — Stylesheet
+   ============================================================ */
+
+body {
+  background: linear-gradient(135deg, #4c1d95, #7c3aed, #a78bfa);
+  padding: 20px;
+  margin: 0;
+  min-height: 100vh;
+  box-sizing: border-box;
+  font-family: 'Inter', Arial, sans-serif;
+}
+
+.controls {
+  background: white;
+  border-radius: 16px;
+  padding: 28px;
+  max-width: 800px;
+  margin: 0 auto 24px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+}
+
+.controls h1 {
+  text-align: center;
+  color: #4c1d95;
+  margin: 0 0 20px;
+  font-size: 1.8rem;
+}
+
+.button-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.type-btn {
+  padding: 16px 12px;
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #6d28d9, #8b5cf6);
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.type-btn:hover { transform: translateY(-2px); filter: brightness(1.1); }
+.type-btn.active { outline: 3px solid #fbbf24; }
+
+.btn-label    { font-size: 0.95rem; font-weight: 700; }
+.btn-subtitle { font-size: 0.75rem; font-weight: 400; opacity: 0.85; }
+
+.print-btn {
+  width: 100%; padding: 14px; border: none; border-radius: 12px;
+  background: linear-gradient(135deg, #db2777, #ec4899);
+  color: white; font-size: 1rem; font-weight: 700; cursor: pointer; margin-bottom: 10px;
+}
+
+.answer-btn {
+  width: 100%; padding: 14px; border: none; border-radius: 12px;
+  background: linear-gradient(135deg, #16a34a, #22c55e);
+  color: white; font-size: 1rem; font-weight: 700; cursor: pointer; margin-bottom: 10px;
+}
+
+.seed-row { display: flex; gap: 10px; align-items: center; }
+
+.seed-input {
+  flex: 1; padding: 10px; border: 1px solid #d1d5db; border-radius: 8px;
+  font-family: monospace; font-size: 0.9rem;
+}
+
+.recreate-btn {
+  padding: 10px 18px; border: none; border-radius: 8px;
+  background: #6d28d9; color: white; cursor: pointer; font-weight: 600;
+}
+
+/* Worksheet */
+.worksheet {
+  position: relative;
+  background: white;
+  border-radius: 8px;
+  max-width: 8.5in;
+  min-height: 11in;
+  margin: 0 auto 24px;
+  padding: 0.5in 0.6in;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+  font-family: Arial, sans-serif;
+  box-sizing: border-box;
+}
+
+.worksheet-header h2 { text-align: center; font-size: 1.5rem; margin: 0 0 12px; color: #1f2937; }
+
+.name-line { display: flex; justify-content: space-between; margin-bottom: 20px; font-size: 1rem; gap: 20px; }
+
+.name-input {
+  border: none; border-bottom: 2px solid black;
+  font-size: 1rem; min-width: 180px; outline: none; background: transparent;
+}
+
+/* Problems grid */
+.problems-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; }
+.problems-grid.cols-2 { grid-template-columns: repeat(2, 1fr); }
+
+.problem {
+  background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px;
+  padding: 12px; min-height: 130px; display: flex; flex-direction: column;
+}
+
+.problem-number { font-size: 0.8rem; color: #6b7280; margin-bottom: 8px; }
+.problem-display { font-family: monospace; font-size: 1.1rem; line-height: 1.8; white-space: pre; margin: 0; }
+
+/* Word problems */
+.keyword-ref {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
+  background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px;
+  padding: 10px; margin-bottom: 20px; font-size: 0.75rem;
+}
+.kw-col strong { display: block; margin-bottom: 4px; font-size: 0.8rem; }
+
+.problem-block { border: 1px solid #d1d5db; border-radius: 8px; padding: 14px; margin-bottom: 14px; }
+.problem-text { font-size: 1rem; margin-bottom: 12px; line-height: 1.5; color: #111827; }
+
+.response-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; font-size: 0.88rem; }
+.field-line { flex: 1; border-bottom: 1.5px solid #374151; height: 20px; }
+
+.op-circles { display: flex; gap: 12px; align-items: center; }
+.op-circle {
+  width: 30px; height: 30px; border: 2px solid #374151; border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 0.9rem; font-weight: bold;
+}
+
+.solve-section { display: flex; gap: 12px; align-items: flex-end; margin-top: 8px; }
+.work-area { flex: 1; height: 64px; border: 2px dashed #9ca3af; border-radius: 6px; }
+.answer-line { white-space: nowrap; font-size: 0.9rem; padding-bottom: 4px; }
+
+/* Mult scaffold */
+.scaffold-grid-wrap { display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px 24px; }
+.scaffold-card { padding: 8px; }
+.sc-number { font-size: 0.8rem; color: #6b7280; margin-bottom: 4px; }
+
+.scaffold-table { font-family: monospace; font-size: 1.3rem; border-collapse: collapse; }
+.scaffold-table td { padding: 2px 4px; text-align: center; min-width: 26px; height: 28px; }
+
+.carry-bubble {
+  width: 20px; height: 20px; border: 1.5px solid #9ca3af; border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 0.7rem; vertical-align: middle;
+}
+.ans-circle {
+  width: 26px; height: 26px; border: 2px solid #374151; border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 0.85rem; vertical-align: middle;
+}
+.ans-square {
+  width: 26px; height: 26px; border: 2px solid #374151;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 0.85rem; vertical-align: middle;
+}
+.line-row td { border-top: 2px solid #374151; padding-top: 2px; }
+
+/* Sub scaffold */
+.sub-grid-wrap { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+.sub-card { padding: 8px; }
+.borrow-circle {
+  width: 22px; height: 22px; border: 1.5px dashed #9ca3af; border-radius: 50%;
+  display: inline-block; vertical-align: middle;
+}
+.ans-square-blue {
+  width: 30px; height: 30px; border: 2px solid #2563eb; background: #eff6ff;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 0.85rem; vertical-align: middle;
+}
+
+/* Scaffold legend */
+.scaffold-legend { display: flex; gap: 16px; align-items: center; font-size: 0.78rem; color: #6b7280; margin-top: 16px; flex-wrap: wrap; }
+.legend-item { display: flex; align-items: center; gap: 6px; }
+
+/* Seed */
+.homework-code { position: absolute; bottom: 0.25in; right: 0.3in; font-family: monospace; font-size: 0.7rem; color: #9ca3af; }
+
+/* Answer key */
+.answer-fill { color: #dc2626; font-weight: bold; }
+.answer-hidden .answer-fill { visibility: hidden; }
+
+/* PEMDAS */
+.pemdas-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+.pemdas-problem {
+  background: #fefce8; border: 1px solid #fde68a; border-radius: 8px;
+  padding: 14px; min-height: 120px;
+}
+.pemdas-expr { font-family: monospace; font-size: 1.2rem; margin-bottom: 10px; font-weight: bold; }
+.pemdas-steps { display: flex; flex-direction: column; gap: 6px; }
+.step-line { border-bottom: 1px dashed #d1d5db; padding-bottom: 4px; font-size: 0.85rem; }
+
+/* 24 Game */
+.game24-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.game24-card {
+  background: #fdf4ff; border: 2px solid #d8b4fe; border-radius: 12px;
+  padding: 20px; text-align: center;
+}
+.game24-numbers { display: flex; justify-content: center; gap: 10px; margin-bottom: 12px; }
+.game24-num {
+  width: 44px; height: 44px; background: #6d28d9; color: white;
+  border-radius: 8px; display: flex; align-items: center; justify-content: center;
+  font-size: 1.4rem; font-weight: bold;
+}
+.game24-work { border-bottom: 1.5px solid #374151; height: 28px; margin-top: 8px; }
+
+/* Print */
+@media print {
+  body { background: white !important; padding: 0; }
+  .controls { display: none !important; }
+  .worksheet { box-shadow: none; max-width: 100%; min-height: auto; margin: 0; padding: 0.25in 0.3in; }
+}
+  </style>
 </head>
 <body>
 
-  <!-- =====================================================
-       START SCREEN
-       ===================================================== -->
-  <div id="start-screen">
-
-    <!-- Top bar -->
-    <div class="lcars-top-bar">
-      <div class="lcars-elbow-tl"></div>
-      <div class="lcars-top-title">
-        EDUCATION GENERATOR
-        <span class="lcars-version">v1.0</span>
-      </div>
-      <div class="lcars-top-bar-fill"></div>
-    </div>
-
-    <!-- Body: left segments | center | right segments -->
-    <div class="lcars-start-body">
-
-      <div class="lcars-left-bar">
-        <div class="lcars-seg" style="background:var(--lcars-orange);flex:3"></div>
-        <div class="lcars-seg" style="background:var(--lcars-purple);flex:1"></div>
-        <div class="lcars-seg" style="background:var(--lcars-blue);flex:4"></div>
-        <div class="lcars-seg" style="background:var(--lcars-red);flex:1"></div>
-        <div class="lcars-seg" style="background:var(--lcars-orange);flex:2"></div>
-        <div class="lcars-seg" style="background:var(--lcars-lblue);flex:1"></div>
-        <div class="lcars-seg" style="background:var(--lcars-purple);flex:3"></div>
-      </div>
-
-      <div class="lcars-start-center">
-        <div class="lcars-start-status">SELECT OPERATING MODE</div>
-
-        <div class="lcars-mode-cards">
-
-          <button id="mode-homework" class="lcars-mode-btn lcars-mode-btn--orange">
-            <span class="lcars-mode-icon">📚</span>
-            <span class="lcars-mode-label">HOMEWORK</span>
-            <span class="lcars-mode-sub">ASSIGNMENT GENERATOR</span>
-          </button>
-
-          <button id="mode-iep" class="lcars-mode-btn lcars-mode-btn--purple">
-            <span class="lcars-mode-icon">📋</span>
-            <span class="lcars-mode-label">IEP GOALS</span>
-            <span class="lcars-mode-sub">SMART GOAL BUILDER</span>
-          </button>
-
-        </div>
-
-        <div class="lcars-start-footer">
-          <div class="lcars-blink-dot"></div>
-          <span>SYSTEM READY</span>
-          <div class="lcars-seg-row">
-            <div class="lcars-micro-seg" style="background:var(--lcars-orange)"></div>
-            <div class="lcars-micro-seg" style="background:var(--lcars-blue)"></div>
-            <div class="lcars-micro-seg" style="background:var(--lcars-purple)"></div>
-          </div>
-        </div>
-      </div>
-
-      <div class="lcars-right-bar">
-        <div class="lcars-seg" style="background:var(--lcars-blue);flex:2"></div>
-        <div class="lcars-seg" style="background:var(--lcars-lblue);flex:1"></div>
-        <div class="lcars-seg" style="background:var(--lcars-purple);flex:3"></div>
-        <div class="lcars-seg" style="background:var(--lcars-red);flex:1"></div>
-        <div class="lcars-seg" style="background:var(--lcars-orange);flex:4"></div>
-        <div class="lcars-seg" style="background:var(--lcars-blue);flex:1"></div>
-        <div class="lcars-seg" style="background:var(--lcars-tan);flex:2"></div>
-      </div>
-
-    </div>
-
-    <!-- Bottom bar -->
-    <div class="lcars-bottom-bar">
-      <div class="lcars-bottom-bar-fill"></div>
-      <div class="lcars-elbow-br"></div>
-    </div>
-
+<div class="controls" id="controls">
+  <h1>📚 Math Homework &amp; IEP Generator</h1>
+  <div class="button-grid" id="typeGrid"></div>
+  <button class="print-btn" id="printBtn">🖨 Print Worksheet</button>
+  <button class="answer-btn" id="answerBtn">📋 Show Answer Key</button>
+  <div class="seed-row">
+    <input type="text" id="seedInput" class="seed-input" placeholder="Paste seed code to re-create a worksheet">
+    <button class="recreate-btn" id="recreateBtn">Re-create</button>
   </div>
+</div>
 
+<div id="worksheet" class="worksheet" style="display:none;"></div>
 
-  <!-- =====================================================
-       APP SCREEN
-       ===================================================== -->
-  <div id="app" class="hidden">
+<script>
+/* ====== Generators ====== */
+(function () {
+  'use strict';
 
-    <!-- TOP BAR -->
-    <header class="lcars-app-topbar">
-      <div class="lcars-elbow-tl-sm"></div>
-      <div class="lcars-topbar-center">
-        <span class="lcars-topbar-label" id="app-title">HOMEWORK GENERATOR</span>
-        <div class="lcars-status-indicator">
-          <span id="api-status" class="api-status-dot"></span>
-          <span id="api-status-text" class="api-status-text">API Ready</span>
-        </div>
+  function makePRNG(seed) {
+    var s = (seed | 0);
+    if (!s) s = Math.floor(Math.random() * 900000) + 100000;
+    s = s >>> 0;
+    return {
+      seed: s,
+      next: function () { s = (Math.imul(1664525, s) + 1013904223) >>> 0; return s / 4294967296; },
+      int:  function (lo, hi) { return lo + Math.floor(this.next() * (hi - lo + 1)); }
+    };
+  }
+
+  function generateAddition(rng) {
+    var p = [], i, a, b;
+    for (i = 0; i < 10; i++) { a = rng.int(10,99);  b = rng.int(10,99);  p.push({a:a,b:b,op:'+',answer:a+b}); }
+    for (i = 0; i < 10; i++) { a = rng.int(100,999); b = rng.int(10,99);  p.push({a:a,b:b,op:'+',answer:a+b}); }
+    for (i = 0; i < 5;  i++) { a = rng.int(100,999); b = rng.int(100,999);p.push({a:a,b:b,op:'+',answer:a+b}); }
+    return p;
+  }
+
+  function generateSubtraction(rng) {
+    var p = [], i, a, b;
+    for (i = 0; i < 10; i++) { a = rng.int(10,99);  b = rng.int(1,9);    p.push({a:a,b:b,op:'−',answer:a-b}); }
+    for (i = 0; i < 10; i++) { a = rng.int(100,999); b = rng.int(10,99);  p.push({a:a,b:b,op:'−',answer:a-b}); }
+    for (i = 0; i < 5;  i++) { a = rng.int(100,999); b = rng.int(100,a);  p.push({a:a,b:b,op:'−',answer:a-b}); }
+    return p;
+  }
+
+  function generateMultiplication(rng) {
+    var p = [], i, a, b;
+    for (i = 0; i < 25; i++) { a = rng.int(2,12); b = rng.int(2,12); p.push({a:a,b:b,op:'×',answer:a*b}); }
+    return p;
+  }
+
+  function generateDivision(rng) {
+    var p = [], i, q, d;
+    for (i = 0; i < 25; i++) { q = rng.int(2,12); d = rng.int(2,12); p.push({a:q*d,b:d,op:'÷',answer:q}); }
+    return p;
+  }
+
+  function generateMixed(rng) {
+    var pool = [], i, a, b, q, d;
+    for (i = 0; i < 5; i++) {
+      a = rng.int(10,99);  b = rng.int(10,99); pool.push({a:a,b:b,op:'+',answer:a+b});
+      a = rng.int(10,99);  b = rng.int(1,9);   pool.push({a:a,b:b,op:'−',answer:a-b});
+      a = rng.int(2,12);   b = rng.int(2,12);  pool.push({a:a,b:b,op:'×',answer:a*b});
+      q = rng.int(2,9); d = rng.int(2,9);      pool.push({a:q*d,b:d,op:'÷',answer:q});
+    }
+    for (i = pool.length-1; i > 0; i--) { var j=rng.int(0,i),t=pool[i]; pool[i]=pool[j]; pool[j]=t; }
+    return pool;
+  }
+
+  function generateWordProblems(rng) {
+    var names = ['Sam','Maria','Alex','Jordan','Tyler','Maya','Chris','Aisha'];
+    function N() { return names[rng.int(0,names.length-1)]; }
+    var T = [
+      function(){var a=rng.int(15,99),b=rng.int(1,a-1),n=N();return{text:n+' has '+a+' stickers. She gives '+b+' to a friend. How many stickers does '+n+' have left?',answer:a-b,unit:'stickers',op:'subtract'};},
+      function(){var a=rng.int(5,50),b=rng.int(5,50);return{text:'There are '+a+' red birds and '+b+' blue birds in a tree. How many birds are there in all?',answer:a+b,unit:'birds',op:'add'};},
+      function(){var a=rng.int(20,99),b=rng.int(1,a-1);return{text:'A baker made '+a+' cookies. He sold '+b+' cookies. How many cookies are left?',answer:a-b,unit:'cookies',op:'subtract'};},
+      function(){var a=rng.int(2,9),b=rng.int(2,7),n=N();return{text:n+' reads '+a+' pages each day. How many pages will '+n+' read in '+b+' days?',answer:a*b,unit:'pages',op:'multiply'};},
+      function(){var g=rng.int(2,9),pg=rng.int(2,9);return{text:'There are '+(g*pg)+' students in '+g+' equal groups. How many students are in each group?',answer:pg,unit:'students',op:'divide'};},
+      function(){var a=rng.int(5,60),b=rng.int(5,60);return{text:'A store has '+a+' apples and '+b+' oranges. How many pieces of fruit does the store have in all?',answer:a+b,unit:'pieces of fruit',op:'add'};},
+      function(){var a=rng.int(30,120),b=rng.int(5,a-1),n=N();return{text:n+' has '+a+' minutes of screen time. She has already used '+b+' minutes. How many minutes are left?',answer:a-b,unit:'minutes',op:'subtract'};},
+      function(){var a=rng.int(2,9),b=rng.int(2,8);return{text:'A bag holds '+b+' marbles. How many marbles are in '+a+' bags?',answer:a*b,unit:'marbles',op:'multiply'};}
+    ];
+    var idx=[0,1,2,3,4,5,6,7];
+    for(var i=idx.length-1;i>0;i--){var j=rng.int(0,i),t=idx[i];idx[i]=idx[j];idx[j]=t;}
+    var p=[];for(var k=0;k<4;k++)p.push(T[idx[k]]());
+    return p;
+  }
+
+  function generateMultScaffold(rng) {
+    var p=[];
+    for(var i=0;i<10;i++){
+      var top=rng.int(12,99),bot=rng.int(2,9),ans=top*bot;
+      var od=top%10,td=Math.floor(top/10),op=od*bot,c1=Math.floor(op/10),tp2=td*bot+c1,c2=Math.floor(tp2/10);
+      p.push({top:top,bottom:bot,answer:ans,carries:[c1,c2]});
+    }
+    return p;
+  }
+
+  function generateSubScaffold(rng) {
+    var p=[],att=0;
+    while(p.length<5&&att<1000){
+      att++;
+      var use3=rng.int(0,1)===1,top,bot;
+      if(use3){top=rng.int(200,999);bot=rng.int(100,top-1);}else{top=rng.int(100,999);bot=rng.int(10,99);}
+      if(top%10>=bot%10)continue;
+      var ans=top-bot;if(ans<=0)continue;
+      var tt=Math.floor((top%100)/10),bt=Math.floor((bot%100)/10),at2=tt-1,tnb=at2<bt;
+      var th=Math.floor(top/100),bh=Math.floor(bot/100),ah=tnb?th-1:th,hnb=ah<bh;
+      p.push({top:top,bottom:bot,answer:ans,borrows:[true,tnb,hnb]});
+    }
+    return p;
+  }
+
+  function generatePEMDAS(rng) {
+    var p=[];
+    var B=[
+      function(){var a=rng.int(2,9),b=rng.int(2,9),c=rng.int(2,9),s=a+b,ans=s*c;return{expression:'('+a+' + '+b+') × '+c,answer:ans,steps:['Step 1 (Parentheses): '+a+' + '+b+' = '+s,'Step 2 (Multiply): '+s+' × '+c+' = '+ans]};},
+      function(){var a=rng.int(2,9),b=rng.int(2,9),c=rng.int(2,9),d=rng.int(2,9),p1=a*b,p2=c*d,ans=p1+p2;return{expression:a+' × '+b+' + '+c+' × '+d,answer:ans,steps:['Step 1 (Multiply left): '+a+' × '+b+' = '+p1,'Step 2 (Multiply right): '+c+' × '+d+' = '+p2,'Step 3 (Add): '+p1+' + '+p2+' = '+ans]};},
+      function(){var a=rng.int(4,9),b=rng.int(2,a-1),c=rng.int(2,9),d=rng.int(2,9),di=a-b,pr=di*c,ans=pr+d;return{expression:'('+a+' - '+b+') × '+c+' + '+d,answer:ans,steps:['Step 1 (Parentheses): '+a+' - '+b+' = '+di,'Step 2 (Multiply): '+di+' × '+c+' = '+pr,'Step 3 (Add): '+pr+' + '+d+' = '+ans]};},
+      function(){var a=rng.int(2,9),b=rng.int(2,9),c=rng.int(4,9),d=rng.int(2,c-1),di=c-d,pr=b*di,ans=a+pr;return{expression:a+' + '+b+' × ('+c+' - '+d+')',answer:ans,steps:['Step 1 (Parentheses): '+c+' - '+d+' = '+di,'Step 2 (Multiply): '+b+' × '+di+' = '+pr,'Step 3 (Add): '+a+' + '+pr+' = '+ans]};},
+      function(){var a=rng.int(2,7),b=rng.int(2,7),c=rng.int(4,9),d=rng.int(2,c-1),s=a+b,di=c-d,ans=s*di;return{expression:'('+a+' + '+b+') × ('+c+' - '+d+')',answer:ans,steps:['Step 1 (Left parens): '+a+' + '+b+' = '+s,'Step 2 (Right parens): '+c+' - '+d+' = '+di,'Step 3 (Multiply): '+s+' × '+di+' = '+ans]};},
+      function(){var a=rng.int(2,6),b=rng.int(2,6),c=rng.int(2,9),d=rng.int(2,6),e=rng.int(2,6),p1=a*b,p2=d*e,ans=p1-c+p2;return{expression:a+' × '+b+' - '+c+' + '+d+' × '+e,answer:ans,steps:['Step 1 (Multiply left): '+a+' × '+b+' = '+p1,'Step 2 (Multiply right): '+d+' × '+e+' = '+p2,'Step 3 (Left to right): '+p1+' - '+c+' + '+p2+' = '+ans]};}
+    ];
+    for(var i=0;i<6;i++)p.push(B[i]());
+    return p;
+  }
+
+  function canMake24(nums){
+    if(nums.length===1)return Math.abs(nums[0]-24)<1e-9;
+    for(var i=0;i<nums.length;i++)for(var j=0;j<nums.length;j++){
+      if(i===j)continue;
+      var rest=nums.filter(function(_,k){return k!==i&&k!==j;});
+      var ops=[nums[i]+nums[j],nums[i]-nums[j],nums[j]-nums[i],nums[i]*nums[j]];
+      if(nums[j]!==0)ops.push(nums[i]/nums[j]);
+      if(nums[i]!==0)ops.push(nums[j]/nums[i]);
+      for(var r=0;r<ops.length;r++)if(canMake24(rest.concat([ops[r]])))return true;
+    }
+    return false;
+  }
+
+  function generate24Game(rng){
+    var sets=[],att=0;
+    while(sets.length<6&&att<10000){att++;var c=[rng.int(1,9),rng.int(1,9),rng.int(1,9),rng.int(1,9)];if(canMake24(c))sets.push({cards:c});}
+    return sets;
+  }
+
+  window.Gen = {
+    makePRNG, generateAddition, generateSubtraction, generateMultiplication,
+    generateDivision, generateMixed, generateWordProblems, generateMultScaffold,
+    generateSubScaffold, generatePEMDAS, generate24Game
+  };
+}());
+</script>
+
+<script>
+/* ====== Renderers ====== */
+(function () {
+  'use strict';
+
+  function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+  function padLeft(s,w){s=String(s);while(s.length<w)s=' '+s;return s;}
+  function opSym(op){return{addition:'+',subtraction:'−',multiplication:'×',division:'÷'}[op]||op||'+';}
+
+  function renderGrid(problems, show) {
+    if(!problems||!problems.length)return'<p>No problems.</p>';
+    var cells=problems.map(function(p,i){
+      var a=p.a!==undefined?p.a:(p.top||0),b=p.b!==undefined?p.b:(p.bottom||0);
+      var ans=p.answer!==undefined?p.answer:p.result,sym=opSym(p.op||p.type);
+      var aS=String(a),bS=String(b),ansS=ans!==undefined?String(ans):'?';
+      var nw=Math.max(aS.length,bS.length),lw=2+nw;
+      var pre=padLeft(aS,lw)+'\n'+sym+' '+padLeft(bS,nw)+'\n'+'-'.repeat(lw)+'\n'+(show?padLeft(ansS,lw):' '.repeat(lw));
+      return'<div class="problem"><div class="problem-number">'+(i+1)+'.</div><pre class="problem-display">'+esc(pre)+'</pre></div>';
+    });
+    return'<div class="problems-grid">'+cells.join('')+'</div>';
+  }
+
+  function renderWordProblems(problems, show) {
+    var kw='<div class="keyword-ref"><div class="kw-col"><strong>&#10133; Add</strong><span>sum, total, in all, together</span></div><div class="kw-col"><strong>&#10134; Subtract</strong><span>difference, fewer, less, remain</span></div><div class="kw-col"><strong>&#10006; Multiply</strong><span>product, times, groups of, each</span></div><div class="kw-col"><strong>&#10135; Divide</strong><span>quotient, per, split, equally</span></div></div>';
+    if(!problems||!problems.length)return kw+'<p>No problems.</p>';
+    var blocks=problems.map(function(p,i){
+      var unit=p.unit||'',ans=p.answer!==undefined?p.answer:'';
+      var aSection=show&&ans!==''?'<div class="answer-fill" style="color:#dc2626;margin-top:8px">Answer: '+esc(ans)+(unit?' '+esc(unit):'')+' </div>':'';
+      return'<div class="problem-block"><div class="problem-number">'+(i+1)+'.</div>'+
+        '<div class="problem-text">'+esc(p.text||'')+'</div>'+
+        '<div class="response-row"><span>Important Words:</span><div class="field-line"></div></div>'+
+        '<div class="response-row"><span>Operation:</span><div class="op-circles"><div class="op-circle">+</div><div class="op-circle">&minus;</div><div class="op-circle">&times;</div><div class="op-circle">&divide;</div></div></div>'+
+        '<div class="solve-section"><div class="work-area"></div><div class="answer-line">Answer: _____ '+esc(unit)+'</div></div>'+
+        aSection+'</div>';
+    });
+    return kw+blocks.join('');
+  }
+
+  function renderMultScaffold(problems, show) {
+    if(!problems||!problems.length)return'<p>No problems.</p>';
+    var cards=problems.map(function(p,i){
+      var top=p.top||p.a||0,bot=p.bottom||p.b||0,ans=p.answer!==undefined?p.answer:top*bot;
+      var tS=String(Math.abs(top)),bS=String(Math.abs(bot)),aS=String(Math.abs(ans));
+      var nc=Math.max(tS.length,aS.length),tc=nc+1;
+      var td=tS.split('');while(td.length<nc)td.unshift('');
+      var ad=aS.split('');while(ad.length<nc)ad.unshift('');
+      var bd=bS.split('');while(bd.length<nc)bd.unshift('');
+      // carries
+      var carries=[];
+      if(show&&bS.length===1){
+        var b1=parseInt(bS,10),cy=0,cArr=[];
+        for(var k=td.length-1;k>=0;k--){var dg=td[k]===''?0:parseInt(td[k],10),pr2=dg*b1+cy;cy=Math.floor(pr2/10);cArr.unshift(cy);}
+        for(var m=0;m<td.length;m++)carries[m]=m<td.length-1?cArr[m+1]:0;
+      }else{for(var n=0;n<nc;n++)carries.push(0);}
+
+      var cRow='<tr><td></td>';
+      for(var c=0;c<nc;c++){var bc=show&&carries[c]>0?esc(String(carries[c])):'';cRow+='<td><span class="carry-bubble">'+bc+'</span></td>';}
+      cRow+='</tr>';
+      var tRow='<tr><td></td>';for(var t=0;t<nc;t++)tRow+='<td>'+esc(td[t])+'</td>';tRow+='</tr>';
+      var bRow='<tr><td>&times;</td>';for(var b2=0;b2<nc;b2++)bRow+='<td>'+esc(bd[b2])+'</td>';bRow+='</tr>';
+      var lRow='<tr class="line-row"><td colspan="'+tc+'"><hr></td></tr>';
+      var aRow='<tr><td></td>';
+      for(var a2=0;a2<nc;a2++){var dv=show?esc(ad[a2]):'';aRow+=a2===nc-1?'<td><span class="ans-circle">'+dv+'</span></td>':'<td><span class="ans-square">'+dv+'</span></td>';}
+      aRow+='</tr>';
+      return'<div class="scaffold-card"><div class="sc-number">'+(i+1)+'.</div><table class="scaffold-table">'+cRow+tRow+bRow+lRow+aRow+'</table></div>';
+    });
+    var legend='<div class="scaffold-legend"><div class="legend-item"><span class="ans-circle" style="display:inline-flex;width:16px;height:16px;border:2px solid #374151;border-radius:50%;"></span> ones</div><div class="legend-item"><span class="ans-square" style="display:inline-flex;width:16px;height:16px;border:2px solid #374151;"></span> tens/hundreds</div><div class="legend-item"><span class="carry-bubble" style="display:inline-flex;width:14px;height:14px;border:1.5px solid #9ca3af;border-radius:50%;"></span> carry</div></div>';
+    return'<div class="scaffold-grid-wrap">'+cards.join('')+'</div>'+legend;
+  }
+
+  function renderSubScaffold(problems, show) {
+    if(!problems||!problems.length)return'<p>No problems.</p>';
+    var cards=problems.map(function(p,i){
+      var top=p.top||p.a||0,bot=p.bottom||p.b||0,ans=p.answer!==undefined?p.answer:top-bot;
+      var tS=String(Math.abs(top)),bS=String(Math.abs(bot)),aS=String(Math.abs(ans));
+      var nc=Math.max(tS.length,bS.length,aS.length),tc=nc+1;
+      var td=tS.split('');while(td.length<nc)td.unshift('');
+      var bd=bS.split('');while(bd.length<nc)bd.unshift('');
+      var ad=aS.split('');while(ad.length<nc)ad.unshift('');
+      var brRow='<tr><td></td>';for(var b2=0;b2<nc;b2++)brRow+='<td><span class="borrow-circle"></span></td>';brRow+='</tr>';
+      var tRow='<tr><td></td>';for(var t=0;t<nc;t++)tRow+='<td>'+esc(td[t])+'</td>';tRow+='</tr>';
+      var bRow='<tr><td>&minus;</td>';for(var b3=0;b3<nc;b3++)bRow+='<td>'+esc(bd[b3])+'</td>';bRow+='</tr>';
+      var lRow='<tr class="line-row"><td colspan="'+tc+'"><hr></td></tr>';
+      var aRow='<tr><td></td>';for(var a2=0;a2<nc;a2++){var dv=show?esc(ad[a2]):'';aRow+='<td><span class="ans-square-blue">'+dv+'</span></td>';}aRow+='</tr>';
+      return'<div class="sub-card"><div class="sc-number">'+(i+1)+'.</div><table class="scaffold-table">'+brRow+tRow+bRow+lRow+aRow+'</table></div>';
+    });
+    return'<div class="sub-grid-wrap">'+cards.join('')+'</div>';
+  }
+
+  function renderPEMDAS(problems, show) {
+    if(!problems||!problems.length)return'<p>No problems.</p>';
+    var items=problems.map(function(p,i){
+      var steps=Array.isArray(p.steps)?p.steps:[],ans=p.answer!==undefined?p.answer:'';
+      var sh;
+      if(show&&steps.length){
+        sh='<div class="pemdas-steps">';
+        steps.forEach(function(s){sh+='<div class="step-line" style="color:#dc2626;">'+esc(String(s))+'</div>';});
+        sh+='<div class="step-line" style="color:#dc2626;">= '+esc(String(ans))+'</div></div>';
+      }else{
+        var n=steps.length||2;sh='<div class="pemdas-steps">';
+        for(var s=0;s<n;s++)sh+='<div class="step-line">Step '+(s+1)+': _______________</div>';
+        sh+='<div class="step-line">= ___</div></div>';
+      }
+      return'<div class="pemdas-problem"><div class="problem-number">'+(i+1)+'.</div><div class="pemdas-expr">'+esc(p.expression||p.expr||'')+'</div>'+sh+'</div>';
+    });
+    return'<div class="pemdas-grid">'+items.join('')+'</div>';
+  }
+
+  function render24Game(problems, show) {
+    if(!problems||!problems.length)return'<p>No problems.</p>';
+    var cards=problems.map(function(p,i){
+      var nums=Array.isArray(p.cards)?p.cards:(Array.isArray(p.numbers)?p.numbers:[]);
+      var nh=nums.map(function(n){return'<div class="game24-num">'+esc(n)+'</div>';}).join('');
+      return'<div class="game24-card"><div style="font-size:0.75rem;color:#6b7280;margin-bottom:8px;">Set '+(i+1)+'</div>'+
+        '<div class="game24-numbers">'+nh+'</div>'+
+        '<div style="font-size:0.8rem;color:#6b7280;margin-bottom:4px;">Make 24 using + &minus; &times; &divide;</div>'+
+        '<div class="game24-work"></div><div class="game24-work" style="margin-top:6px;"></div></div>';
+    });
+    return'<div class="game24-grid">'+cards.join('')+'</div>';
+  }
+
+  function worksheet(type, data, show) {
+    var fn={
+      addition:function(){return renderGrid(data,show);},
+      subtraction:function(){return renderGrid(data,show);},
+      multiplication:function(){return renderGrid(data,show);},
+      division:function(){return renderGrid(data,show);},
+      mixed:function(){return renderGrid(data,show);},
+      wordProblems:function(){return renderWordProblems(data,show);},
+      multScaffold:function(){return renderMultScaffold(data,show);},
+      subScaffold:function(){return renderSubScaffold(data,show);},
+      pemdas:function(){return renderPEMDAS(data,show);},
+      game24:function(){return render24Game(data,show);}
+    }[type];
+    return fn?fn():'<p>Unknown type: '+esc(type)+'</p>';
+  }
+
+  window.Render = { worksheet };
+}());
+</script>
+
+<script>
+/* ====== App Controller ====== */
+const TYPES = [
+  { key: 'addition',       label: '➕ Addition',          subtitle: '2 & 3 digit' },
+  { key: 'subtraction',    label: '➖ Subtraction',       subtitle: '2 & 3 digit' },
+  { key: 'multiplication', label: '✖ Multiplication',     subtitle: 'Times tables' },
+  { key: 'division',       label: '➗ Division',          subtitle: 'No remainders' },
+  { key: 'mixed',          label: '🔢 Mixed Operations',   subtitle: '+ − × ÷ combo' },
+  { key: 'wordProblems',   label: '📝 Word Problems',      subtitle: 'IEP scaffold' },
+  { key: 'multScaffold',   label: '🧮 Mult. Scaffold',     subtitle: '2×1 digit IEP' },
+  { key: 'subScaffold',    label: '📐 Sub. w/ Regrouping', subtitle: 'Borrow scaffold' },
+  { key: 'pemdas',         label: '🎯 PEMDAS',            subtitle: 'Order of ops' },
+  { key: 'game24',         label: '🃏 24 Game',           subtitle: 'Make 24!' },
+];
+
+const TITLES = {
+  addition:'Addition Practice', subtraction:'Subtraction Practice',
+  multiplication:'Multiplication Practice', division:'Division Practice',
+  mixed:'Mixed Operations Practice', wordProblems:'Word Problems',
+  multScaffold:'2-Digit × 1-Digit Multiplication', subScaffold:'Subtraction with Regrouping',
+  pemdas:'Order of Operations (PEMDAS)', game24:'The 24 Game',
+};
+
+let currentType = null, currentData = null, currentSeed = null, showingAnswers = false;
+
+function generateWorksheet(type, seedOverride) {
+  const rng = Gen.makePRNG(seedOverride);
+  const generators = {
+    addition:       () => Gen.generateAddition(rng),
+    subtraction:    () => Gen.generateSubtraction(rng),
+    multiplication: () => Gen.generateMultiplication(rng),
+    division:       () => Gen.generateDivision(rng),
+    mixed:          () => Gen.generateMixed(rng),
+    wordProblems:   () => Gen.generateWordProblems(rng),
+    multScaffold:   () => Gen.generateMultScaffold(rng),
+    subScaffold:    () => Gen.generateSubScaffold(rng),
+    pemdas:         () => Gen.generatePEMDAS(rng),
+    game24:         () => Gen.generate24Game(rng),
+  };
+  currentType = type;
+  currentData = generators[type]();
+  currentSeed = rng.seed;
+  renderAndShow();
+  document.getElementById('seedInput').value = currentSeed;
+}
+
+function renderAndShow() {
+  if (!currentType || !currentData) return;
+  const el = document.getElementById('worksheet');
+  el.innerHTML = `
+    <div class="worksheet-header">
+      <h2>${TITLES[currentType]}</h2>
+      <div class="name-line">
+        <div>Name: <input class="name-input" type="text" style="min-width:200px"></div>
+        <div>Date: <input class="name-input" type="text" style="min-width:120px"></div>
       </div>
-      <div class="lcars-topbar-right-cap"></div>
-    </header>
+    </div>
+    ${Render.worksheet(currentType, currentData, showingAnswers)}
+    <div class="homework-code">Seed: ${currentSeed}</div>
+  `;
+  el.style.display = 'block';
+}
 
-    <!-- LEFT SIDEBAR (Form) -->
-    <aside class="lcars-sidebar">
+document.addEventListener('DOMContentLoaded', function () {
+  const grid = document.getElementById('typeGrid');
+  TYPES.forEach(function (type) {
+    const btn = document.createElement('button');
+    btn.className = 'type-btn';
+    btn.dataset.key = type.key;
+    btn.innerHTML = `<span class="btn-label">${type.label}</span><span class="btn-subtitle">${type.subtitle}</span>`;
+    btn.addEventListener('click', function () {
+      document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      generateWorksheet(type.key);
+    });
+    grid.appendChild(btn);
+  });
 
-      <div class="lcars-sidebar-top-strip"></div>
+  document.getElementById('printBtn').addEventListener('click', () => window.print());
 
-      <!-- API KEY GROUP -->
-      <div class="lcars-sidebar-group">
-        <div class="lcars-group-label">API KEY</div>
-        <input type="password" id="api-key-input" class="lcars-input" placeholder="Enter Anthropic API key">
-        <div id="api-key-help" class="lcars-help-text">Stored locally only</div>
-      </div>
+  document.getElementById('answerBtn').addEventListener('click', function () {
+    showingAnswers = !showingAnswers;
+    this.textContent = showingAnswers ? '✅ Hide Answers' : '📋 Show Answer Key';
+    if (currentData) renderAndShow();
+  });
 
-      <div class="lcars-sidebar-divider" style="background:var(--lcars-orange)"></div>
+  document.getElementById('recreateBtn').addEventListener('click', function () {
+    if (!currentType) { alert('Please select a worksheet type first'); return; }
+    generateWorksheet(currentType, parseInt(document.getElementById('seedInput').value, 10));
+  });
+});
+</script>
 
-      <!-- HOMEWORK FORM -->
-      <div id="homework-form" class="lcars-form hidden">
-        <div class="lcars-sidebar-group">
-          <div class="lcars-group-label">GRADE LEVEL</div>
-          <select id="hw-grade" class="lcars-select">
-            <option value="K">Kindergarten</option>
-            <option value="1">Grade 1</option>
-            <option value="2">Grade 2</option>
-            <option value="3">Grade 3</option>
-            <option value="4">Grade 4</option>
-            <option value="5">Grade 5</option>
-            <option value="6">Grade 6</option>
-            <option value="7">Grade 7</option>
-            <option value="8">Grade 8</option>
-            <option value="9">Grade 9</option>
-            <option value="10">Grade 10</option>
-            <option value="11">Grade 11</option>
-            <option value="12">Grade 12</option>
-          </select>
-        </div>
-
-        <div class="lcars-sidebar-group">
-          <div class="lcars-group-label">SUBJECT</div>
-          <select id="hw-subject" class="lcars-select">
-            <option value="math">Math</option>
-            <option value="reading">Reading</option>
-            <option value="writing">Writing</option>
-            <option value="science">Science</option>
-            <option value="social-studies">Social Studies</option>
-            <option value="language-arts">Language Arts</option>
-          </select>
-        </div>
-
-        <div class="lcars-sidebar-group">
-          <div class="lcars-group-label">TOPIC/SKILL</div>
-          <input type="text" id="hw-topic" class="lcars-input" placeholder="e.g., fractions, photosynthesis">
-        </div>
-
-        <div class="lcars-sidebar-group">
-          <div class="lcars-group-label">NUMBER OF PROBLEMS</div>
-          <input type="number" id="hw-count" class="lcars-input" min="1" max="20" value="5">
-        </div>
-
-        <div class="lcars-sidebar-group">
-          <div class="lcars-group-label">DIFFICULTY</div>
-          <select id="hw-difficulty" class="lcars-select">
-            <option value="easy">Easy</option>
-            <option value="medium" selected>Medium</option>
-            <option value="hard">Hard</option>
-          </select>
-        </div>
-      </div>
-
-      <!-- IEP FORM -->
-      <div id="iep-form" class="lcars-form hidden">
-        <div class="lcars-sidebar-group">
-          <div class="lcars-group-label">STUDENT GRADE</div>
-          <select id="iep-grade" class="lcars-select">
-            <option value="K">Kindergarten</option>
-            <option value="elementary">Elementary (1-5)</option>
-            <option value="middle">Middle School (6-8)</option>
-            <option value="high">High School (9-12)</option>
-          </select>
-        </div>
-
-        <div class="lcars-sidebar-group">
-          <div class="lcars-group-label">AREA OF NEED</div>
-          <select id="iep-area" class="lcars-select">
-            <option value="reading">Reading/Decoding</option>
-            <option value="comprehension">Reading Comprehension</option>
-            <option value="math-calc">Math Calculation</option>
-            <option value="math-problem">Math Problem Solving</option>
-            <option value="writing">Written Expression</option>
-            <option value="oral">Oral Language</option>
-            <option value="social">Social/Behavioral</option>
-            <option value="executive">Executive Function</option>
-          </select>
-        </div>
-
-        <div class="lcars-sidebar-group">
-          <div class="lcars-group-label">CURRENT PERFORMANCE</div>
-          <textarea id="iep-baseline" class="lcars-textarea" placeholder="Describe baseline performance" rows="3"></textarea>
-        </div>
-
-        <div class="lcars-sidebar-group">
-          <div class="lcars-group-label">TARGET SKILL</div>
-          <textarea id="iep-target" class="lcars-textarea" placeholder="What should the student be able to do?" rows="3"></textarea>
-        </div>
-
-        <div class="lcars-sidebar-group">
-          <div class="lcars-group-label">MEASUREMENT</div>
-          <select id="iep-measurement" class="lcars-select">
-            <option value="accuracy">Accuracy %</option>
-            <option value="frequency">Frequency</option>
-            <option value="duration">Duration</option>
-            <option value="rubric">Rubric/Rating Scale</option>
-          </select>
-        </div>
-      </div>
-
-      <!-- Spacer + status -->
-      <div class="lcars-sidebar-spacer"></div>
-
-      <div class="lcars-sidebar-status">
-        <div class="lcars-blink-dot"></div>
-        <span id="status-text">Ready to generate</span>
-      </div>
-
-      <div class="lcars-sidebar-bottom-cap"></div>
-
-    </aside>
-
-    <!-- MAIN CONTENT AREA -->
-    <main class="lcars-content-area">
-      <div id="output-container" class="output-container">
-        <div id="output-text" class="output-text"></div>
-      </div>
-    </main>
-
-    <!-- BOTTOM TOOLBAR -->
-    <footer class="lcars-bottom-toolbar">
-      <div class="lcars-bottom-left-cap"></div>
-
-      <div class="lcars-action-group">
-        <button id="generate-btn" class="lcars-btn lcars-btn--orange">GENERATE</button>
-        <button id="copy-btn"     class="lcars-btn lcars-btn--blue">COPY</button>
-        <button id="print-btn"    class="lcars-btn lcars-btn--blue">PRINT</button>
-        <button id="clear-btn"    class="lcars-btn lcars-btn--red">CLEAR</button>
-        <button id="back-btn"     class="lcars-btn lcars-btn--purple">HOME</button>
-      </div>
-
-      <div class="lcars-bottom-right-cap"></div>
-    </footer>
-
-  </div>
-
-  <script src="app.js"></script>
 </body>
 </html>
