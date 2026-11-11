@@ -1,0 +1,867 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Creator 5 Pro Device</title>
+<!--
+  Device page for the Flashforge Creator 5 Pro (OpenCreator / Klipper), laid out
+  after the "C5Pro Device Page" design canvas with the camera in the left column.
+  Talks to Moonraker over its websocket. Served from the printer's nginx it uses
+  the same host; opened anywhere else, pass ?host=192.168.0.203.
+  ?demo shows sample data without connecting to anything.
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #050708;
+    --panel: #0B1114;
+    --text: #E8F1F4;
+    --soft: #C3D3D8;
+    --muted: #8AA3AC;
+    --accent: #8FD3E6;
+    --warn: #F2A65A;
+    --line: rgba(143,211,230,.22);
+    --line-soft: rgba(143,211,230,.16);
+    --line-strong: rgba(143,211,230,.4);
+    --sans: Inter, "Segoe UI", system-ui, sans-serif;
+    --mono: "IBM Plex Mono", Consolas, "SF Mono", Menlo, monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    background: var(--bg); color: var(--text);
+    font: 300 13px/1.4 var(--sans);
+    padding: 28px 32px; min-height: 100vh;
+    display: flex; flex-direction: column; gap: 22px;
+  }
+  a { color: inherit; text-decoration: none; }
+  button { font: inherit; color: inherit; cursor: pointer; }
+  button:disabled { opacity: .35; cursor: not-allowed; }
+  button:focus-visible, a:focus-visible, input:focus-visible { outline: 1px solid #C9EEF7; outline-offset: 2px; }
+  .mono { font-family: var(--mono); }
+  .muted { color: var(--muted); }
+  h2, .label {
+    margin: 0; font-size: 11px; font-weight: 500; letter-spacing: .22em;
+    text-transform: uppercase; color: var(--muted);
+  }
+  .head-row { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+  .head-row .mono { font-size: 11px; color: var(--muted); }
+
+  /* ---------- header ---------- */
+  header {
+    display: flex; justify-content: space-between; align-items: flex-end; gap: 16px 28px; flex-wrap: wrap;
+    border-bottom: 1px solid var(--line); padding-bottom: 18px;
+  }
+  .title { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+  .title .row { display: flex; align-items: baseline; gap: 18px; flex-wrap: wrap; }
+  h1 { margin: 0; font-size: 40px; font-weight: 200; letter-spacing: .04em; line-height: 1.1; }
+  .unit-id { font-family: var(--mono); font-size: 14px; color: var(--accent); }
+  #meta { font-family: var(--mono); font-size: 12px; color: var(--muted); letter-spacing: .04em; }
+  .status-wrap { display: flex; align-items: center; gap: 28px; }
+  .status { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+  .status .now { display: flex; align-items: center; gap: 10px; }
+  #dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
+  #state { font-size: 18px; font-weight: 400; letter-spacing: .16em; white-space: nowrap; }
+  .tag { font-size: 10px; letter-spacing: .2em; text-transform: uppercase; color: var(--muted); border: 1px solid rgba(143,211,230,.3); padding: 6px 10px; }
+
+  /* ---------- layout ---------- */
+  main {
+    display: grid; grid-template-columns: minmax(300px, 400px) minmax(0, 1fr) 330px; gap: 28px;
+    flex: 1; align-items: start;
+  }
+  .col { display: flex; flex-direction: column; gap: 22px; min-width: 0; }
+  .block { display: flex; flex-direction: column; gap: 10px; }
+  .box { border: 1px solid var(--line); padding: 16px 18px; display: flex; flex-direction: column; gap: 8px; }
+
+  .btn {
+    min-height: 44px; background: transparent; border: 1px solid var(--line-strong); color: var(--text);
+    font-size: 12px; letter-spacing: .14em; text-transform: uppercase; padding: 4px 8px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+  }
+  .btn:hover:not(:disabled) { border-color: var(--accent); background: rgba(143,211,230,.06); }
+  .btn small { font-family: var(--mono); font-size: 10px; color: var(--muted); letter-spacing: 0; text-transform: none; }
+  .btn.sm { min-height: 34px; font-size: 11px; }
+  .btn.on { background: var(--accent); border-color: var(--accent); color: var(--bg); font-weight: 500; }
+  .btn.warn { min-height: 60px; border-color: var(--warn); color: var(--warn); font-size: 13px; letter-spacing: .16em; font-weight: 400; }
+  .btn.warn small { color: var(--warn); }
+  .btn.warn:hover:not(:disabled) { background: rgba(242,166,90,.1); border-color: var(--warn); }
+  .grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .grid3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+  .grid4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+
+  input.tgt {
+    width: 46px; background: transparent; color: var(--text); border: 0; border-bottom: 1px solid var(--line-strong);
+    font: 13px var(--mono); text-align: center; padding: 1px 0; border-radius: 0;
+  }
+  input.tgt:hover, input.tgt:focus { border-color: var(--accent); outline: none; }
+
+  /* ---------- camera ---------- */
+  .camera { position: relative; aspect-ratio: 16 / 9; background: var(--panel); border: 1px solid var(--line); overflow: hidden; }
+  .camera img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
+  .camera i { position: absolute; width: 16px; height: 16px; border: 0 solid var(--accent); }
+  .camera i.tl { left: 10px; top: 10px; border-left-width: 1px; border-top-width: 1px; }
+  .camera i.tr { right: 10px; top: 10px; border-right-width: 1px; border-top-width: 1px; }
+  .camera i.bl { left: 10px; bottom: 10px; border-left-width: 1px; border-bottom-width: 1px; }
+  .camera i.br { right: 10px; bottom: 10px; border-right-width: 1px; border-bottom-width: 1px; }
+  .camera .tagline { position: absolute; font: 11px var(--mono); color: var(--muted); text-shadow: 0 0 4px #000, 0 0 2px #000; }
+  .camera .live {
+    left: 36px; top: 12px; display: flex; align-items: center; gap: 8px; color: var(--text);
+    font: 500 10px var(--sans); letter-spacing: .2em; text-transform: uppercase;
+  }
+  .camera .live::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--warn); box-shadow: 0 0 8px var(--warn); }
+  .camera .live.off { color: var(--muted); }
+  .camera .live.off::before { background: var(--muted); box-shadow: none; }
+  #camNote {
+    position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+  }
+  #camNote b { font-size: 13px; font-weight: 300; letter-spacing: .22em; text-transform: uppercase; color: var(--soft); }
+  #camNote span { font: 11px var(--mono); color: var(--muted); }
+
+  /* ---------- manual control ---------- */
+  .motion { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 16px; align-items: start; }
+  .jog { display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 46px); gap: 6px; }
+  .jog .btn { min-height: 0; letter-spacing: .06em; }
+  .jog .home { border-color: var(--accent); color: var(--accent); font-size: 10px; }
+  .zcol { display: flex; flex-direction: column; gap: 6px; }
+  .zcol .label { font-size: 10px; letter-spacing: .18em; margin-top: 2px; }
+  .seg .btn { min-height: 28px; font: 11px var(--mono); letter-spacing: 0; }
+  .fan { border: 1px solid var(--line); padding: 10px 12px; display: flex; flex-direction: column; gap: 4px; }
+  .fan .label { font-size: 10px; letter-spacing: .18em; }
+  .fan .val { font-size: 22px; font-weight: 200; }
+  .fan input[type=range] { width: 100%; accent-color: var(--accent); margin: 0; }
+  .toggle { justify-content: space-between; flex-direction: row; padding: 0 12px; }
+  .toggle span:last-child { font: 11px var(--mono); letter-spacing: 0; color: var(--muted); }
+  .toggle.on span:last-child { color: var(--accent); }
+
+  /* ---------- toolheads ---------- */
+  .tool {
+    display: grid; grid-template-columns: 44px minmax(0, 1fr) 124px 84px; align-items: center; gap: 12px;
+    padding: 14px 8px 14px 0; border-top: 1px solid var(--line); cursor: pointer; border-left: 2px solid transparent;
+  }
+  .tool:last-child { border-bottom: 1px solid var(--line); }
+  .tool.sel { border-left-color: var(--accent); padding-left: 10px; background: rgba(143,211,230,.04); }
+  .tool .t { font-size: 28px; font-weight: 200; }
+  .tool .mat { display: flex; align-items: center; gap: 10px; font-size: 14px; min-width: 0; }
+  .tool .mat span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .swatch { flex: none; width: 12px; height: 12px; border-radius: 50%; border: 1px solid var(--muted); }
+  .swatch.empty { border-style: dashed; }
+  .tool .heat { display: flex; flex-direction: column; gap: 6px; font: 13px var(--mono); white-space: nowrap; }
+  .tool input.tgt { width: 36px; }
+  .track { height: 2px; background: var(--line-soft); }
+  .track > div { height: 2px; width: 0; background: rgba(143,211,230,.6); transition: width .4s; }
+  .badge { font-size: 10px; letter-spacing: .18em; text-transform: uppercase; padding: 4px 8px; text-align: center; border: 1px solid rgba(143,211,230,.2); color: var(--muted); }
+  .badge.standby { color: var(--text); border-color: var(--line-strong); }
+  .badge.active { color: var(--bg); background: var(--accent); border-color: var(--accent); font-weight: 500; }
+  .tool.active .track > div { background: var(--accent); }
+
+  .big { font-size: 34px; font-weight: 200; line-height: 1.15; white-space: nowrap; }
+  .big small { font-size: 14px; color: var(--muted); }
+  .big input.tgt { width: 38px; }
+  .box .mono { font-size: 11px; color: var(--muted); }
+
+  /* ---------- narrative / console ---------- */
+  #stream { font: 13px/1.9 var(--mono); min-height: calc(13px * 1.9 * 6); color: var(--muted); }
+  #stream div { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #stream .cur { color: var(--accent); }
+  #stream .key { color: var(--text); }
+  #console { font: 11px/1.6 var(--mono); color: var(--muted); height: 96px; overflow-y: auto; border-top: 1px solid var(--line-soft); padding-top: 6px; }
+  #console div { white-space: pre-wrap; word-break: break-word; }
+  #console .err { color: var(--warn); }
+  #console .sent { color: var(--accent); }
+  #cmd {
+    width: 100%; background: transparent; border: 0; border-top: 1px solid var(--line-soft); border-bottom: 1px solid var(--line-soft);
+    color: var(--text); padding: 8px 0; font: 12px var(--mono);
+  }
+  #cmd:focus { outline: none; border-bottom-color: var(--accent); }
+
+  /* ---------- current loop ---------- */
+  .loop { padding: 18px; gap: 12px; }
+  .loop .file { display: flex; gap: 12px; align-items: center; }
+  #file { font: 14px var(--mono); word-break: break-all; flex: 1; }
+  #thumb { flex: none; width: 56px; height: 56px; object-fit: contain; border: 1px solid var(--line); }
+  .loop .pct { display: flex; align-items: baseline; gap: 10px; }
+  #pct { font-size: 44px; font-weight: 200; line-height: 1; }
+  .loop .track > div { background: var(--accent); }
+  .stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; font-size: 12px; color: var(--muted); }
+  .stats b { color: var(--text); font: 400 12px var(--mono); }
+
+  .sensor { display: flex; justify-content: space-between; gap: 12px; padding: 9px 0; border-top: 1px solid var(--line-soft); font-size: 13px; }
+  .sensor:last-child { border-bottom: 1px solid var(--line-soft); }
+  .sensor span:last-child { font-family: var(--mono); text-align: right; }
+  .sensor .ok { color: var(--accent); }
+  .sensor .bad { color: var(--warn); }
+
+  #frozen {
+    position: fixed; left: 0; right: 0; bottom: 0; padding: 14px 32px; background: #1c1610; border-top: 1px solid var(--warn);
+    display: flex; justify-content: space-between; gap: 6px 24px; flex-wrap: wrap; font: 13px var(--mono); color: var(--warn);
+  }
+  #toast {
+    position: fixed; bottom: 64px; left: 50%; transform: translateX(-50%); max-width: 90vw;
+    background: var(--panel); border: 1px solid var(--accent); padding: 8px 16px; font: 12px var(--mono);
+    opacity: 0; transition: opacity .2s; pointer-events: none;
+  }
+  #toast.show { opacity: 1; }
+  #toast.err { border-color: var(--warn); color: var(--warn); }
+  [hidden] { display: none !important; }
+
+  /* medium: camera + controls beside the loop column, toolheads below */
+  @media (max-width: 1180px) {
+    main { grid-template-columns: minmax(0, 1fr) 330px; }
+    .col.mid { grid-column: 1 / -1; order: 3; }
+  }
+  /* phones / narrow panes: one scrolling column */
+  @media (max-width: 820px) {
+    body { padding: 16px; gap: 16px; }
+    h1 { font-size: 28px; }
+    header { align-items: flex-start; }
+    .status { align-items: flex-start; }
+    main { grid-template-columns: minmax(0, 1fr); gap: 20px; }
+    .col { gap: 20px; }
+    .col.mid, .col.right { grid-column: auto; order: 0; }
+    .tool { grid-template-columns: 40px minmax(0, 1fr) 76px; gap: 10px; }
+    .tool .t { font-size: 22px; }
+    .tool .heat { grid-column: 2 / -1; grid-row: 2; }
+    .tool .badge { grid-column: 3; grid-row: 1; padding: 4px; letter-spacing: .1em; }
+    .box { padding: 14px 12px; }
+    .big { font-size: 28px; }
+    #frozen { padding: 12px 16px; font-size: 12px; }
+  }
+  @media (max-width: 380px) {
+    .motion { grid-template-columns: 126px minmax(0, 1fr); gap: 10px; }
+    .jog { grid-template-rows: repeat(3, 38px); }
+    .big { font-size: 24px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="title">
+    <div class="label">Unit profile · Fabrication</div>
+    <div class="row">
+      <h1>CREATOR 5 PRO</h1>
+      <div class="unit-id" id="unitId">C5PRO</div>
+    </div>
+    <div id="meta"></div>
+  </div>
+  <div class="status-wrap">
+    <div class="status">
+      <div class="label">Status</div>
+      <div class="now"><span id="dot"></span><span id="state">CONNECTING</span></div>
+    </div>
+    <div class="tag" id="demoTag" hidden>Sample data</div>
+  </div>
+</header>
+
+<main>
+  <!-- Column 1: camera feed + manual control -->
+  <div class="col left">
+    <div class="block">
+      <div class="head-row"><h2>Visual feed</h2><span class="mono" id="camInfo">ustreamer</span></div>
+      <div class="camera" id="camera">
+        <img id="cam" alt="Printer camera">
+        <div id="camNote"><b>Camera feed</b><span id="camNoteSub">connecting…</span></div>
+        <i class="tl"></i><i class="tr"></i><i class="bl"></i><i class="br"></i>
+        <div class="tagline live off" id="live">Live</div>
+        <div class="tagline" style="right:36px;top:12px">CAM 01</div>
+        <div class="tagline" style="left:36px;bottom:12px" id="camHost"></div>
+      </div>
+      <div class="grid2">
+        <button class="btn" onclick="snapshot()">Snapshot</button>
+        <button class="btn" onclick="fullscreen()">Fullscreen</button>
+      </div>
+    </div>
+
+    <div class="block">
+      <div class="head-row"><h2>Manual control</h2><span class="mono" id="homed"></span></div>
+      <div class="motion">
+        <div class="jog">
+          <span></span><button class="btn" data-move="Y 1">Y+</button><span></span>
+          <button class="btn" data-move="X -1">X−</button>
+          <button class="btn home" id="homeBtn" onclick="home()">Home</button>
+          <button class="btn" data-move="X 1">X+</button>
+          <span></span><button class="btn" data-move="Y -1">Y−</button><span></span>
+        </div>
+        <div class="zcol">
+          <span class="label">Step · mm</span>
+          <div class="grid4 seg" id="step">
+            <button class="btn">0.1</button><button class="btn on">1</button><button class="btn">10</button><button class="btn">50</button>
+          </div>
+          <span class="label">Z</span>
+          <div class="grid2">
+            <button class="btn sm" data-move="Z 1">Z+</button>
+            <button class="btn sm" data-move="Z -1">Z−</button>
+          </div>
+          <span class="label">Extruder · 10 mm</span>
+          <div class="grid2">
+            <button class="btn sm" id="extBtn" onclick="extrude(10)">Extrude</button>
+            <button class="btn sm" id="retBtn" onclick="extrude(-10)">Retract</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="block">
+      <h2>Environment</h2>
+      <div class="grid3">
+        <div class="fan"><span class="label">Part</span><div class="val" id="fanPartV">-</div><input type="range" id="fanPart" data-p="" aria-label="Part fan"></div>
+        <div class="fan"><span class="label">Circ.</span><div class="val" id="fanCircV">-</div><input type="range" id="fanCirc" data-p="2" aria-label="Circulation fan"></div>
+        <div class="fan"><span class="label">Chamber</span><div class="val" id="fanChV">-</div><input type="range" id="fanCh" data-p="3" aria-label="Chamber fan"></div>
+      </div>
+      <div class="grid2">
+        <button class="btn toggle" id="lightSw" onclick="toggleLight()"><span>Light</span><span>OFF</span></button>
+        <button class="btn toggle" id="quietSw" onclick="toggleQuiet()"><span>Quiet</span><span>OFF</span></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Column 2: toolheads + thermals + narrative -->
+  <div class="col mid">
+    <div class="block">
+      <div class="head-row"><h2>Toolheads</h2><span class="mono" id="activeTool"></span></div>
+      <div id="tools"></div>
+      <div class="grid3">
+        <button class="btn sm" id="pickBtn" onclick="pickTool()">Pick up</button>
+        <button class="btn sm" id="dockBtn" onclick="dockTool()">Dock</button>
+        <button class="btn sm" id="loadBtn" onclick="loadTool()">Load</button>
+      </div>
+    </div>
+
+    <div class="grid2" style="gap:16px">
+      <div class="box">
+        <div class="label">Bed</div>
+        <div class="big"><span id="tBed">-</span><small> / <input class="tgt" id="tgtBed" inputmode="numeric" aria-label="Bed target">°</small></div>
+        <div class="mono" id="bedSub">heater_bed</div>
+      </div>
+      <div class="box">
+        <div class="label">Chamber</div>
+        <div class="big"><span id="tCh">-</span><small> / <input class="tgt" id="tgtCh" inputmode="numeric" aria-label="Chamber target">°</small></div>
+        <div class="mono" id="chSub">chamber_heater</div>
+      </div>
+    </div>
+
+    <div class="block">
+      <div class="head-row"><h2>Narrative stream</h2><span class="mono" id="streamInfo"></span></div>
+      <div id="stream"></div>
+      <div id="console"></div>
+      <input id="cmd" placeholder="Send G-code…  (Enter)" autocomplete="off" spellcheck="false" aria-label="Send G-code">
+    </div>
+  </div>
+
+  <!-- Column 3: loop, sensors, commands -->
+  <div class="col right">
+    <div class="box loop">
+      <div class="label">Current loop</div>
+      <div class="file"><div id="file">No active loop</div><img id="thumb" alt="" hidden></div>
+      <div class="pct"><div id="pct">0%</div><div class="muted" id="layer"></div></div>
+      <div class="track"><div id="bar"></div></div>
+      <div class="stats">
+        <div>Elapsed <b id="elapsed">-</b></div>
+        <div>Remaining <b id="remain">-</b></div>
+        <div>ETA <b id="eta">-</b></div>
+        <div>Speed <b id="speedV">-</b></div>
+      </div>
+      <div class="grid4 seg" id="speed">
+        <button class="btn" data-v="50">Silent</button>
+        <button class="btn" data-v="100">Std</button>
+        <button class="btn" data-v="125">Sport</button>
+        <button class="btn" data-v="166">Ludi</button>
+      </div>
+    </div>
+
+    <div>
+      <h2 style="margin-bottom:8px">Sensors</h2>
+      <div id="sensors"></div>
+    </div>
+
+    <div class="block">
+      <h2>Commands</h2>
+      <div class="grid2">
+        <button class="btn" id="pauseBtn" onclick="pauseResume()" style="min-height:52px" disabled><span id="pauseLbl">Pause loop</span><small id="pauseCode">PAUSE</small></button>
+        <a class="btn" id="fluiddLink" target="_blank" rel="noopener" style="min-height:52px">Analysis<small>FLUIDD</small></a>
+        <button class="btn" id="stopBtn" onclick="cancelPrint()" style="min-height:52px" disabled>End loop<small>CANCEL_PRINT</small></button>
+        <a class="btn" href="http://spoolman.dkon.org" target="_blank" rel="noopener" style="min-height:52px">Inventory<small>SPOOLMAN</small></a>
+      </div>
+      <button class="btn warn" id="freezeBtn" onclick="freeze()"><span id="freezeLbl">Freeze all motor functions</span><small id="freezeCode">M112 · EMERGENCY STOP</small></button>
+    </div>
+  </div>
+</main>
+
+<div id="frozen" hidden>
+  <span>ALL MOTOR FUNCTIONS FROZEN · Klipper is shut down</span>
+  <span id="frozenMsg">FIRMWARE_RESTART required to bring unit back online</span>
+</div>
+<div id="toast"></div>
+
+<script>
+  const QS = new URLSearchParams(location.search);
+  const DEMO = QS.has('demo');
+  const HOST = QS.get('host') || location.host;
+  const HTTP = `http://${HOST}`;
+  const WS_URL = `ws://${HOST}/websocket`;
+  // OpenCreator's nginx 302s /webcam/ to <same host>:8080, which breaks behind a
+  // proxy name (c5p.dkon.org:8080 is another service). Go to the streamer directly;
+  // ustreamer keeps mjpg-streamer's ?action= URLs.
+  const HOSTNAME = HOST.split(':')[0];
+  const CAM_HOST = /^\d+\.\d+\.\d+\.\d+$/.test(HOSTNAME) ? HOSTNAME : '192.168.0.203';
+  const CAM = `http://${CAM_HOST}:8080/`;
+  const TOOLS = [0, 1, 2, 3];
+  const heaterOf = i => i === 0 ? 'extruder' : `extruder${i}`;
+  const CHAMBER = 'heater_generic chamber_heater';
+
+  const OBJECTS = [
+    'print_stats', 'display_status', 'virtual_sdcard', 'toolhead', 'gcode_move', 'idle_timeout',
+    'heater_bed', CHAMBER, 'creator5_toolchanger', 'AFC',
+    'fan_generic fanM106', 'fan_generic chamber_loop_fan', 'fan_generic chamber_fan',
+    'led chamber_led', 'output_pin quiet_mode', 'webhooks', 'system_stats', 'mcu',
+    ...TOOLS.map(heaterOf), ...TOOLS.map(i => `AFC_lane extruder${i}`),
+  ];
+  // sensors are found on the printer rather than assumed: anything matching these is subscribed and listed
+  const SENSOR_RE = /^(filament_switch_sensor|filament_motion_sensor|temperature_sensor) |door|tangle/i;
+  let sensorObjs = [];
+
+  const S = {};               // merged printer state
+  let ws, rpcId = 0, pending = {}, meta = null, metaFile = null, selTool = 0, klippy = 'offline';
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s).replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
+
+  // ---------- connection ----------
+  function rpc(method, params = {}) {
+    return new Promise((resolve, reject) => {
+      if (!ws || ws.readyState !== 1) return reject(new Error('Not connected'));
+      const id = ++rpcId;
+      pending[id] = { resolve, reject };
+      ws.send(JSON.stringify({ jsonrpc: '2.0', method, params, id }));
+    });
+  }
+
+  function connect() {
+    ws = new WebSocket(WS_URL);
+    ws.onopen = async () => {
+      log(`Connected to ${HOST}`);
+      try {
+        await rpc('server.connection.identify', { client_name: 'c5-device', version: '2.0', type: 'web', url: location.href });
+      } catch (e) { /* identify is optional */ }
+      subscribe();
+    };
+    ws.onmessage = ev => {
+      const m = JSON.parse(ev.data);
+      if (m.id && pending[m.id]) {
+        const p = pending[m.id]; delete pending[m.id];
+        m.error ? p.reject(new Error(m.error.message)) : p.resolve(m.result);
+        return;
+      }
+      switch (m.method) {
+        case 'notify_status_update': merge(m.params[0]); break;
+        case 'notify_gcode_response': log(m.params[0], m.params[0].startsWith('!!') ? 'err' : ''); break;
+        case 'notify_klippy_ready': log('Klipper ready'); subscribe(); break;
+        case 'notify_klippy_shutdown': log('Klipper shutdown', 'err'); klippy = 'shutdown'; render(); break;
+        case 'notify_klippy_disconnected': log('Klipper disconnected', 'err'); klippy = 'disconnected'; render(); break;
+      }
+    };
+    ws.onclose = () => {
+      klippy = 'offline'; render();
+      Object.values(pending).forEach(p => p.reject(new Error('Disconnected')));
+      pending = {};
+      setTimeout(connect, 3000);
+    };
+  }
+
+  async function subscribe() {
+    try {
+      const info = await rpc('printer.info');
+      klippy = info.state;
+      if (info.state_message && info.state !== 'ready') $('frozenMsg').textContent = info.state_message.split('\n')[0];
+      if (klippy !== 'ready') { render(); if (klippy === 'startup') setTimeout(subscribe, 2000); return; }
+      const all = (await rpc('printer.objects.list')).objects;
+      sensorObjs = all.filter(o => SENSOR_RE.test(o));
+      const wanted = [...OBJECTS, ...sensorObjs].filter(o => all.includes(o));
+      const res = await rpc('printer.objects.subscribe', { objects: Object.fromEntries(wanted.map(o => [o, null])) });
+      merge(res.status);
+    } catch (e) {
+      log(`Subscribe failed: ${e.message}`, 'err');
+      setTimeout(subscribe, 3000);
+    }
+  }
+
+  function merge(diff) {
+    for (const [k, v] of Object.entries(diff)) S[k] = Object.assign(S[k] || {}, v);
+    render();
+  }
+
+  // ---------- commands ----------
+  async function gcode(script, quiet) {
+    if (!quiet) log(script.replace(/\n/g, ' · '), 'sent');
+    if (DEMO) return;
+    try { await rpc('printer.gcode.script', { script }); }
+    catch (e) { toast(e.message, true); }
+  }
+  const call = method => rpc(method).catch(e => toast(e.message, true));
+
+  function pauseResume() { call(S.print_stats?.state === 'paused' ? 'printer.print.resume' : 'printer.print.pause'); }
+  function cancelPrint() { if (confirm('End the current loop? This cancels the print.')) call('printer.print.cancel'); }
+  function freeze() {
+    if (klippy === 'shutdown' || klippy === 'error') { log('FIRMWARE_RESTART', 'sent'); call('printer.firmware_restart'); }
+    else if (confirm('Freeze all motor functions?\nThis is an emergency stop: Klipper shuts down and needs a firmware restart.')) call('printer.emergency_stop');
+  }
+  function home() { gcode('G28'); }
+
+  function stepSize() { return parseFloat(document.querySelector('#step .on').textContent); }
+  document.querySelectorAll('[data-move]').forEach(b => b.addEventListener('click', () => {
+    const [axis, dir] = b.dataset.move.split(' ');
+    const dist = stepSize() * dir;
+    gcode(`G91\nG1 ${axis}${dist} F${axis === 'Z' ? 600 : 6000}\nG90`);
+  }));
+  function extrude(len) {
+    gcode(len > 0 ? `_CLIENT_EXTRUDE LENGTH=${len} SPEED=5` : `_CLIENT_RETRACT LENGTH=${-len} SPEED=5`);
+  }
+
+  function setTarget(heater, input) {
+    const v = parseFloat(input.value);
+    if (isNaN(v) || v < 0) return;
+    gcode(`SET_HEATER_TEMPERATURE HEATER=${heater} TARGET=${v}`);
+    input.blur();
+  }
+  $('tgtBed').addEventListener('change', e => setTarget('heater_bed', e.target));
+  $('tgtCh').addEventListener('change', e => setTarget('chamber_heater', e.target));
+
+  document.querySelectorAll('#speed button').forEach(b => b.addEventListener('click', () => gcode(`M220 S${b.dataset.v}`)));
+  document.querySelectorAll('#step button').forEach(b => b.addEventListener('click', () => {
+    document.querySelectorAll('#step button').forEach(x => x.classList.remove('on'));
+    b.classList.add('on');
+  }));
+
+  // fans go through the printer's M106 macro (P2 = circulation, P3 = chamber)
+  document.querySelectorAll('.fan input').forEach(r => {
+    r.addEventListener('input', () => { $(r.id + 'V').textContent = r.value + '%'; r.dataset.dragging = 1; });
+    r.addEventListener('change', () => {
+      delete r.dataset.dragging;
+      const s = Math.round(r.value * 2.55);
+      gcode(r.dataset.p ? `M106 P${r.dataset.p} S${s}` : `M106 S${s}`);
+    });
+  });
+
+  const lightOn = () => (S['led chamber_led']?.color_data?.[0]?.[3] || 0) > 0;
+  const quietOn = () => (S['output_pin quiet_mode']?.value || 0) > 0;
+  function toggleLight() { gcode(`SET_LED LED=chamber_led WHITE=${lightOn() ? 0 : 1}`); }
+  function toggleQuiet() { gcode(quietOn() ? 'C5_MISC_QUIET_MODE_OFF' : 'C5_MISC_QUIET_MODE_ON'); }
+
+  function pickTool() { gcode(`AFC_SELECT_TOOL TOOL=extruder${selTool}`); }
+  function dockTool() { gcode('AFC_UNSELECT_TOOL'); }
+  function loadTool() {
+    const lane = S[`AFC_lane extruder${selTool}`] || {};
+    const temp = lane.extruder_temp > 0 ? lane.extruder_temp : 220;
+    if (confirm(`Load filament into T${selTool} at ${temp}°C?\nThe tool will be picked up, heated, purged, cooled and docked.`))
+      gcode(`C5_LOAD_SELECTED_TOOL TOOL=${selTool} TEMP=${temp} LENGTH=80`);
+  }
+
+  $('cmd').addEventListener('keydown', e => {
+    if (e.key === 'Enter' && e.target.value.trim()) { gcode(e.target.value.trim()); e.target.value = ''; }
+  });
+
+  // ---------- camera ----------
+  function startCamera() {
+    const img = $('cam');
+    $('camHost').textContent = `${CAM_HOST}:8080`;
+    const live = ok => {
+      $('camNote').hidden = ok; img.style.visibility = ok ? '' : 'hidden';
+      $('live').classList.toggle('off', !ok);
+      if (!ok) $('camNoteSub').textContent = 'camera unavailable · retrying';
+    };
+    img.onerror = () => { live(false); setTimeout(() => { img.src = `${CAM}?action=stream&t=${Date.now()}`; }, 5000); };
+    img.onload = () => {
+      live(true);
+      if (img.naturalWidth) $('camInfo').textContent = `ustreamer · ${img.naturalWidth} × ${img.naturalHeight}`;
+    };
+    img.style.visibility = 'hidden';
+    img.src = `${CAM}?action=stream`;
+  }
+  function snapshot() { window.open(`${CAM}?action=snapshot`, '_blank'); }
+  function fullscreen() { $('camera').requestFullscreen?.(); }
+
+  // ---------- narrative stream: the G-code just ahead of the print head ----------
+  let streamFor = null, streamBusy = false, streamOk = true;
+  async function updateStream() {
+    const ps = S.print_stats || {}, pos = S.virtual_sdcard?.file_position;
+    if (DEMO || streamBusy || !streamOk || ps.state !== 'printing' || !ps.filename || pos == null) return;
+    if (streamFor === `${ps.filename}@${pos}`) return;
+    streamBusy = true;
+    try {
+      const r = await fetch(`${HTTP}/server/files/gcodes/${ps.filename.split('/').map(encodeURIComponent).join('/')}`,
+        { headers: { Range: `bytes=${pos}-${pos + 2047}` } });
+      if (r.status !== 206) { r.body?.cancel(); throw new Error(`no range support (HTTP ${r.status})`); }
+      const lines = (await r.text()).split('\n').slice(0, -1).map(l => l.trim()).filter(Boolean).slice(0, 6);
+      streamFor = `${ps.filename}@${pos}`;
+      showStream(lines);
+    } catch (e) {
+      streamOk = false;   // don't keep hammering a server that can't do it
+      log(`Narrative stream unavailable: ${e.message}`, 'err');
+      renderStreamIdle();
+    } finally { streamBusy = false; }
+  }
+  function showStream(lines) {
+    $('streamInfo').textContent = `next ${lines.length} commands`;
+    $('stream').innerHTML = lines.map((l, i) => {
+      const key = /^(T\d|;\s*LAYER|;\s*TYPE|M10[49]|M1[49]0|G28|PAUSE|AFC)/i.test(l);
+      return `<div class="${i === 0 ? 'cur' : key ? 'key' : ''}">${i === 0 ? '› ' : '  '}${esc(l)}</div>`;
+    }).join('');
+  }
+  function renderStreamIdle() {
+    const st = S.print_stats?.state;
+    if (st === 'printing' && streamOk) return;
+    $('streamInfo').textContent = '';
+    $('stream').innerHTML = `<div>${st === 'printing' ? 'G-code look-ahead unavailable on this host' :
+      st === 'paused' ? 'Loop paused' : 'No loop running · upcoming G-code shows here during a print'}</div>`;
+    streamFor = null;
+  }
+
+  // ---------- rendering ----------
+  const STATES = {
+    printing:     ['IN LOOP · PRINTING', 'accent'],
+    paused:       ['PAUSED', 'text'],
+    standby:      ['IDLE · AWAITING LOOP', 'muted'],
+    complete:     ['LOOP COMPLETE', 'accent'],
+    cancelled:    ['LOOP ENDED', 'muted'],
+    error:        ['FAULT', 'warn'],
+    shutdown:     ['FROZEN', 'warn'],
+    startup:      ['STARTING', 'muted'],
+    disconnected: ['KLIPPER OFFLINE', 'warn'],
+    offline:      ['OFFLINE', 'warn'],
+  };
+  function setState(s) {
+    const [text, tone] = STATES[s] || [String(s).toUpperCase(), 'muted'];
+    const c = `var(--${tone})`;
+    $('state').textContent = text;
+    $('dot').style.background = c;
+    $('dot').style.boxShadow = tone === 'muted' ? 'none' : `0 0 10px ${c}`;
+  }
+  function fmtDur(sec) {
+    if (!isFinite(sec) || sec < 0) return '-';
+    const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60);
+    return `${h}:${String(m).padStart(2, '0')}`;
+  }
+  const deg = v => v == null ? '-' : v.toFixed(1) + '°';
+  function targetInput(el, obj) {
+    if (obj && document.activeElement !== el) el.value = Math.round(obj.target);
+  }
+
+  // tool rows are built once so a focused target input survives re-renders
+  $('tools').innerHTML = TOOLS.map(i => `
+    <div class="tool" data-i="${i}">
+      <div class="t">T${i}</div>
+      <div class="mat"><span class="swatch empty"></span><span>-</span></div>
+      <div class="heat">
+        <span><span class="cur">-</span> <span class="muted">/ <input class="tgt" inputmode="numeric" aria-label="T${i} target">°</span></span>
+        <div class="track"><div></div></div>
+      </div>
+      <div class="badge">Docked</div>
+    </div>`).join('');
+  $('tools').addEventListener('click', e => {
+    const row = e.target.closest('.tool');
+    if (row) { selTool = +row.dataset.i; render(); }
+  });
+  $('tools').addEventListener('change', e => {
+    if (e.target.matches('input.tgt')) setTarget(heaterOf(+e.target.closest('.tool').dataset.i), e.target);
+  });
+
+  async function loadMeta(filename) {
+    metaFile = filename; meta = null;
+    $('thumb').hidden = true;
+    if (!filename || DEMO) return;
+    try {
+      meta = await rpc('server.files.metadata', { filename });
+      const th = (meta.thumbnails || []).sort((a, b) => b.width - a.width)[0];
+      if (th) {
+        const dir = filename.includes('/') ? filename.slice(0, filename.lastIndexOf('/') + 1) : '';
+        $('thumb').src = `${HTTP}/server/files/gcodes/${encodeURI(dir + th.relative_path)}`;
+        $('thumb').hidden = false;
+      }
+      render();
+    } catch (e) { /* no metadata for this file */ }
+  }
+
+  function renderSensors() {
+    const rows = [];
+    // filament: AFC lane state per tool
+    const lanes = TOOLS.map(i => S[`AFC_lane extruder${i}`]).filter(Boolean);
+    if (lanes.length) {
+      const flags = lanes.map(l => l.load ?? l.prep ?? l.tool_loaded);
+      if (flags.some(f => f != null)) {
+        const out = TOOLS.filter((_, i) => flags[i] === false).map(i => `T${i}`);
+        rows.push(['Filament T0–T3', out.length ? `EMPTY ${out.join(' ')}` : `OK ×${flags.filter(Boolean).length}`, out.length ? 'bad' : 'ok']);
+      }
+    }
+    for (const name of sensorObjs) {
+      const o = S[name]; if (!o) continue;
+      const label = name.split(' ').pop().replace(/_/g, ' ');
+      if (name.startsWith('temperature_sensor ')) { if (o.temperature != null) rows.push([label, deg(o.temperature), '']); }
+      else if ('filament_detected' in o) rows.push([label, !o.enabled ? 'DISABLED' : o.filament_detected ? 'OK' : 'RUNOUT', !o.enabled ? '' : o.filament_detected ? 'ok' : 'bad']);
+      else {
+        const v = o.state ?? o.value ?? o.triggered ?? o.is_open;
+        if (v != null) rows.push([label, String(v).toUpperCase(), '']);
+      }
+    }
+    const mcu = S.mcu?.last_stats, sys = S.system_stats;
+    if (mcu?.mcu_awake != null) rows.push(['MCU', `${(mcu.mcu_awake * 100).toFixed(0)}% load`, '']);
+    if (sys?.sysload != null) rows.push(['Host', `load ${sys.sysload.toFixed(2)}`, '']);
+    $('sensors').innerHTML = rows.length
+      ? rows.map(([k, v, c]) => `<div class="sensor"><span>${esc(k)}</span><span class="${c}">${esc(v)}</span></div>`).join('')
+      : '<div class="sensor"><span class="muted">No sensor data</span><span></span></div>';
+  }
+
+  function render() {
+    const ps = S.print_stats || {};
+    const ready = klippy === 'ready';
+    const state = !ready ? klippy : ps.state || 'standby';
+    setState(state);
+    const active = ready && ['printing', 'paused'].includes(ps.state);
+    const frozen = klippy === 'shutdown' || klippy === 'error';
+
+    // header
+    const max = S.toolhead?.axis_maximum;
+    $('meta').textContent = ['Klipper · OpenCreator', HOST, `${TOOLS.length} toolheads`,
+      max ? `${Math.round(max[0])} × ${Math.round(max[1])} × ${Math.round(max[2])} mm` : null].filter(Boolean).join(' · ');
+
+    // loop
+    if (ps.filename !== metaFile) loadMeta(ps.filename);
+    $('file').textContent = ps.filename ? ps.filename.split('/').pop() : 'No active loop';
+    const prog = S.display_status?.progress || S.virtual_sdcard?.progress || 0;
+    $('bar').style.width = (prog * 100) + '%';
+    $('pct').textContent = Math.floor(prog * 100) + '%';
+    const cur = ps.info?.current_layer, tot = ps.info?.total_layer ?? meta?.layer_count;
+    $('layer').textContent = cur != null ? `layer ${cur} / ${tot ?? '?'}` : '';
+    const dur = ps.print_duration || 0;
+    $('elapsed').textContent = ps.filename ? fmtDur(ps.total_duration) : '-';
+    let left = NaN;
+    if (active && prog > 0.02) left = dur / prog - dur;
+    else if (active && meta?.estimated_time) left = meta.estimated_time - dur;
+    $('remain').textContent = fmtDur(left);
+    $('eta').textContent = isFinite(left)
+      ? new Date(Date.now() + left * 1000).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : '-';
+    const sf = Math.round((S.gcode_move?.speed_factor || 1) * 100);
+    $('speedV').textContent = ready ? sf + '%' : '-';
+    document.querySelectorAll('#speed button').forEach(b => { b.classList.toggle('on', ready && +b.dataset.v === sf); b.disabled = !ready; });
+
+    // commands
+    const paused = ps.state === 'paused';
+    $('pauseBtn').disabled = !active;
+    $('pauseLbl').textContent = paused ? 'Resume loop' : 'Pause loop';
+    $('pauseCode').textContent = paused ? 'RESUME' : 'PAUSE';
+    $('stopBtn').disabled = !active;
+    $('freezeLbl').textContent = frozen ? 'Restore motor functions' : 'Freeze all motor functions';
+    $('freezeCode').textContent = frozen ? 'FIRMWARE_RESTART' : 'M112 · EMERGENCY STOP';
+    $('freezeBtn').disabled = !DEMO && (klippy === 'offline' || klippy === 'disconnected');
+    $('frozen').hidden = !frozen;
+    document.body.style.paddingBottom = frozen ? '76px' : '';
+
+    // toolheads
+    const at = S.creator5_toolchanger?.active_tool;
+    $('activeTool').textContent = !ready ? '' : at != null ? `T${at} mounted · T${selTool} selected` : `no tool mounted · T${selTool} selected`;
+    document.querySelectorAll('#tools .tool').forEach(row => {
+      const i = +row.dataset.i, lane = S[`AFC_lane extruder${i}`] || {}, h = S[heaterOf(i)];
+      const color = /^#?[0-9a-f]{3,8}$/i.test(lane.color || '') ? '#' + lane.color.replace('#', '') : '';
+      const sw = row.querySelector('.swatch');
+      sw.classList.toggle('empty', !color); sw.style.background = color;
+      row.querySelector('.mat span:last-child').textContent = lane.material || 'Empty';
+      row.querySelector('.mat').title = color.toUpperCase();
+      row.querySelector('.cur').textContent = deg(h?.temperature);
+      targetInput(row.querySelector('input'), h);
+      row.querySelector('.track > div').style.width = h?.target > 0 ? Math.min(100, h.temperature / h.target * 100) + '%' : '0';
+      const st = i === at ? 'active' : h?.target > 0 ? 'standby' : 'docked';
+      const badge = row.querySelector('.badge');
+      badge.className = 'badge ' + st; badge.textContent = st;
+      row.classList.toggle('active', i === at);
+      row.classList.toggle('sel', i === selTool);
+      row.title = lane.status || '';
+    });
+
+    // bed / chamber
+    const bed = S.heater_bed, ch = S[CHAMBER];
+    $('tBed').textContent = deg(bed?.temperature); targetInput($('tgtBed'), bed);
+    $('tCh').textContent = deg(ch?.temperature);   targetInput($('tgtCh'), ch);
+    $('bedSub').textContent = `heater_bed · PWM ${bed?.power != null ? bed.power.toFixed(2) : '-'}`;
+    const chFan = S['fan_generic chamber_fan']?.speed;
+    $('chSub').textContent = `heater · PWM ${ch?.power != null ? ch.power.toFixed(2) : '-'}` + (chFan != null ? ` · fan ${Math.round(chFan * 100)}%` : '');
+
+    // manual control: locked while a loop is running or Klipper is down
+    const homedAxes = S.toolhead?.homed_axes || '';
+    $('homed').textContent = !ready ? '' : homedAxes ? `homed ${homedAxes.toUpperCase()}` : 'not homed';
+    const lock = active || !ready;
+    document.querySelectorAll('[data-move], #homeBtn, #extBtn, #retBtn, #pickBtn, #dockBtn, #loadBtn').forEach(b => b.disabled = lock);
+    $('dockBtn').disabled = lock || at == null;
+    document.querySelectorAll('.fan input, #lightSw, #quietSw, input.tgt, #cmd').forEach(b => b.disabled = !ready);
+
+    // environment
+    for (const [id, obj] of [['fanPart', 'fan_generic fanM106'], ['fanCirc', 'fan_generic chamber_loop_fan'], ['fanCh', 'fan_generic chamber_fan']]) {
+      const r = $(id), v = Math.round((S[obj]?.speed || 0) * 100);
+      if (!r.dataset.dragging) { r.value = v; $(id + 'V').textContent = S[obj] ? v + '%' : '-'; }
+    }
+    for (const [id, on] of [['lightSw', lightOn()], ['quietSw', quietOn()]]) {
+      $(id).classList.toggle('on', on); $(id).lastElementChild.textContent = on ? 'ON' : 'OFF';
+    }
+
+    renderSensors();
+    renderStreamIdle();
+    updateStream();
+  }
+
+  // ---------- misc ----------
+  function log(msg, cls = '') {
+    const c = $('console');
+    const d = document.createElement('div'); d.textContent = msg; if (cls) d.className = cls;
+    c.appendChild(d);
+    while (c.children.length > 200) c.firstChild.remove();
+    c.scrollTop = c.scrollHeight;
+  }
+  function toast(msg, err) {
+    const t = $('toast');
+    t.textContent = msg; t.classList.toggle('err', !!err); t.classList.add('show');
+    clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('show'), 2500);
+    if (err) log(msg, 'err');
+  }
+
+  // ---------- sample data (?demo) ----------
+  function demo() {
+    $('demoTag').hidden = false;
+    $('cam').hidden = true;
+    $('camNoteSub').textContent = 'placeholder · live stream shows here';
+    $('camHost').textContent = `${CAM_HOST}:8080`;
+    klippy = 'ready';
+    sensorObjs = ['temperature_sensor mcu_temp'];
+    const lane = (material, color, load = true) => ({ material, color, load, extruder_temp: 215 });
+    merge({
+      print_stats: { state: 'printing', filename: 'arca_qr_dovetail.gcode', print_duration: 3480, total_duration: 3610, info: { current_layer: 112, total_layer: 240 } },
+      display_status: { progress: 0.46 }, gcode_move: { speed_factor: 1 },
+      toolhead: { homed_axes: 'xyz', axis_maximum: [256, 256, 256, 0] },
+      creator5_toolchanger: { active_tool: 0 },
+      extruder: { temperature: 215.0, target: 215 }, extruder1: { temperature: 168.4, target: 170 },
+      extruder2: { temperature: 31.2, target: 0 }, extruder3: { temperature: 30.8, target: 0 },
+      'AFC_lane extruder0': lane('PLA', '1B1D1F'), 'AFC_lane extruder1': lane('PLA', 'F1F1EE'),
+      'AFC_lane extruder2': lane('PETG', 'E8843C'), 'AFC_lane extruder3': lane('TPU 95A', '4F7FD6'),
+      heater_bed: { temperature: 62.0, target: 62, power: 0.31 }, [CHAMBER]: { temperature: 41.8, target: 45, power: 0.6 },
+      'fan_generic fanM106': { speed: 0.8 }, 'fan_generic chamber_loop_fan': { speed: 0.4 }, 'fan_generic chamber_fan': { speed: 0.6 },
+      'led chamber_led': { color_data: [[0, 0, 0, 1]] }, 'output_pin quiet_mode': { value: 0 },
+      'temperature_sensor mcu_temp': { temperature: 48.1 }, mcu: { last_stats: { mcu_awake: 0.02 } }, system_stats: { sysload: 0.41 },
+    });
+    const sample = () => showStream(['G1 X121.04 Y94.10 E0.398', ';LAYER_CHANGE 113', 'T1', 'M109 T1 S215', 'G1 Z22.60 F3000', 'G1 X118.62 Y94.10 E0.412']);
+    sample();
+    log('Sample data · not connected to a printer');
+    // let the buttons be tried: pause/resume and freeze/restore flip local state
+    window.pauseResume = () => { merge({ print_stats: { state: S.print_stats.state === 'paused' ? 'printing' : 'paused' } }); if (S.print_stats.state === 'printing') sample(); };
+    window.freeze = () => { klippy = klippy === 'shutdown' ? 'ready' : 'shutdown'; render(); if (klippy === 'ready' && S.print_stats.state === 'printing') sample(); };
+  }
+
+  $('unitId').textContent = /^\d+\.\d+\.\d+\.\d+$/.test(HOSTNAME) ? `C5PRO · ${HOSTNAME.split('.').slice(2).map(n => n.padStart(2, '0')).join('').slice(-4)}` : 'C5PRO';
+  $('fluiddLink').href = `${HTTP}/`;
+  if (DEMO) demo();
+  else {
+    render();
+    setInterval(render, 5000);  // keep remaining time / ETA moving between updates
+    startCamera();
+    connect();
+  }
+</script>
+</body>
+</html>
